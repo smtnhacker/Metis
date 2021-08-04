@@ -17,7 +17,7 @@ dummy_collection = [ReadingListItem(title=x[0], author=x[1], date=x[2]) for x in
 # ----- Initialize the Window ----- #
 
 window = tk.Tk()
-window.title('Metis - Reading Councilor')
+window.title('Metis')
 window.minsize(width=500, height=300)
 window.rowconfigure(0, minsize=100, weight=0)
 window.rowconfigure(1, minsize=300, weight=1)
@@ -48,11 +48,16 @@ ent_book_given = tk.Entry(
     master=frm_main,
     width=60
 )
-ent_book_given.bind("<Key>", lambda e : "break")
+ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
 ent_book_given.grid(row=0, column=1, padx=10, pady=10)
 
 frm_list = tk.Frame(window)
 frm_list.grid(row=1, column=0)
+
+# ----- Populate the List ----- #
+class ListEntry:
+    def __init__(self, window : tk.Tk, master : tk.Frame, list_items : ReadingListItem):
+        pass
 
 # Place this portion at the end of the program
 window.mainloop()
