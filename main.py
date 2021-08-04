@@ -18,7 +18,7 @@ dummy_collection = [ReadingListItem(title=x[0], author=x[1], date=x[2]) for x in
 
 window = tk.Tk()
 window.title('Metis')
-window.minsize(width=500, height=300)
+window.minsize(width=800, height=400)
 window.rowconfigure(0, minsize=100, weight=0)
 window.rowconfigure(1, minsize=300, weight=1)
 window.columnconfigure(0, minsize=500, weight=1)
@@ -51,13 +51,26 @@ ent_book_given = tk.Entry(
 ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
 ent_book_given.grid(row=0, column=1, padx=10, pady=10)
 
-frm_list = tk.Frame(window)
-frm_list.grid(row=1, column=0)
+frm_list = tk.Frame(master=window)
+frm_list.grid(row=1, column=0, sticky='ew')
 
 # ----- Populate the List ----- #
 class ListEntry:
-    def __init__(self, window : tk.Tk, master : tk.Frame, list_items : ReadingListItem):
-        pass
+    def __init__(self, frame : tk.Frame, item : ReadingListItem):
+        self.frame = frame
+        self.item = item
+        self.available = item.available
+    
+        # --- Create the GUI --- #
+        CLR_AVAILABLE = "#e4ffbd"
+        CLR_UNAVAILABLE = "#ffbdbd"
+        self.frame.config(height=25, bg=CLR_AVAILABLE if self.available else CLR_UNAVAILABLE)
+        self.label = tk.Label(master=self.frame, text=self.item.format_book(), background=self.frame['bg'])
+        self.label.pack(padx=5, pady=5)
+        self.frame.pack(fill=tk.X, padx=10, pady=5)
+
+gui_list = [ListEntry(tk.Frame(frm_list), item) for item in Metis.collection]
+print(gui_list)
 
 # Place this portion at the end of the program
 window.mainloop()

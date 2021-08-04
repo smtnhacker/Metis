@@ -4,16 +4,13 @@ class MetisClass:
     """Provides an interface for handling the reading lists"""
     def __init__(self, collection=list()):
         self.collection = collection
-        self.available = list(filter(lambda x : x.available, self.collection))
+        self.availables = list(filter(lambda x : x.available, self.collection))
     
     def request_book(self):
         "Returns a book from the available collection"
-
-        def format_book(book):
-            return f'{book.title} ({book.date}) by {book.author}'
         
-        if self.available:
-            return format_book(random.choice(self.available))
+        if self.availables:
+            return random.choice(self.availables).format_book()
         else:
             return 'No book available'
 
@@ -36,3 +33,6 @@ class ReadingListItem:
                 self.__dict__[attrib] = value
             else:
                 print(f'Attribute {attrib} does not exist.')
+    
+    def format_book(self):
+        return f'{self.title} ({self.date}) by {self.author}'
