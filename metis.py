@@ -27,7 +27,14 @@ class MetisClass:
             self.availables.remove(item)
     
     def insert_item(self, data):
-        return True
+        new_item = ReadingListItem(**data)
+        if new_item.format_book() in self.indices.keys():
+            return None
+        self.collection.append(new_item)
+        self.availables.add(new_item)
+        self.indices[new_item.format_book()] = len(self.collection) - 1
+        print(f'Successfully added {new_item.format_book()}.')
+        return new_item
 
 class ReadingListItem:
     """Describes a book a to read"""

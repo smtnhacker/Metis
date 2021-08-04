@@ -126,8 +126,8 @@ class AddDialog:
             data = {
                 'title': title,
                 'subtitle': subtitle,
-                'author': author,
-                'date': date,
+                'author': author if author else 'Anonymous',
+                'date': date if date else 'n.d.',
                 'summary': summary,
             }
 
@@ -157,10 +157,11 @@ def CallCreateDialog():
         return
 
     # Verify if the book already exists
-    if not Metis.insert_item(modal.data):
+    new_item = Metis.insert_item(modal.data)
+    if not new_item:
         messagebox.showerror(message='Book already exists.')
     else:
-        print(modal.data)
+        item_list[new_item.format_book()] = ListEntry(tk.Frame(frm_list), new_item)
         messagebox.showinfo(message='Book successfully added!')
 
 btn_add_book.config(command=CallCreateDialog)
