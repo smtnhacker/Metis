@@ -54,6 +54,62 @@ ent_book_given = tk.Entry(
 ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
 ent_book_given.grid(row=0, column=1, padx=10, pady=10)
 
+# ----- Add Book Modal ----- #
+btn_add_book = tk.Button(
+    master=frm_main,
+    text="Add Book",
+    width=25,
+)
+btn_add_book.grid(row=1, column=0, padx=10, pady=5)
+
+class AddDialog:
+    def __init__(self, root : tk.Tk):
+        modal = tk.Toplevel(root)
+        modal.title('Add a new book')
+        modal.minsize(500, 330)
+        modal.resizable(False, False)
+
+        modal.protocol("WM_DELETE_WINDOW", lambda : self.dismiss(modal))
+        modal.transient(root)
+        modal.wait_visibility()
+        modal.grab_set()
+
+        # --- Set-up the modal --- #
+        frm_entries = tk.Frame(modal)
+        frm_entries.pack(padx=20, pady=10)
+
+        lbl_title = tk.Label(master=frm_entries, text='Title: ').grid(row=0, column=0)
+        ent_title = tk.Entry(master=frm_entries).grid(row=0, column=1, sticky='ew')
+
+        lbl_subtitle = tk.Label(master=frm_entries, text='Subtitle: ').grid(row=1, column=0)
+        ent_subtitle = tk.Entry(master=frm_entries).grid(row=1, column=1, sticky='ew')
+
+        lbl_author = tk.Label(master=frm_entries, text='Author').grid(row=2, column=0)
+        ent_author = tk.Entry(master=frm_entries).grid(row=2, column=1, sticky='ew')
+
+        lbl_date = tk.Label(master=frm_entries, text='Date: ').grid(row=3, column=0)
+        ent_date = tk.Entry(master=frm_entries).grid(row=3, column=1, sticky='ew')
+
+        lbl_summary = tk.Label(master=frm_entries, text='Summary: ').grid(row=4, column=0)
+        txt_summary = tk.Text(master=frm_entries, width=40, height=7).grid(row=4, column=1)
+        
+        frm_btn = tk.Frame(modal)
+        frm_btn.pack(padx=20, pady=5)
+        
+        btn_submit = tk.Button(master=frm_btn, text='Submit')
+        btn_submit.grid(row=0, column=0, padx=10)
+
+        btn_cancel = tk.Button(master=frm_btn, text='Cancel', command=lambda : self.dismiss(modal))
+        btn_cancel.grid(row=0, column=1, padx=10)
+
+        modal.wait_window()
+    
+    def dismiss(self, modal):
+        modal.grab_release()
+        modal.destroy()
+
+btn_add_book.config(command=lambda : AddDialog(window))
+
 # ----- Set-up the Reading List GUI ----- #
 frm_list = tk.Frame(master=window)
 frm_list.grid(row=1, column=0, sticky='ew')
@@ -87,8 +143,6 @@ class ListEntry:
         self.available = not self.available
         self.frame.config(bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
         self.label.config(background=self.frame['bg'])
-
-
 
 item_list = { item.format_book() : ListEntry(tk.Frame(frm_list), item) for item in Metis.collection}
 
