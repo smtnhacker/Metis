@@ -11,7 +11,9 @@ class MetisClass:
         "Returns a book from the available collection"
         
         if self.availables:
-            return random.choice(list(self.availables)).format_book()
+            chosen = random.choice(list(self.availables))
+            self.toggle(chosen)
+            return chosen.format_book()
         else:
             return 'No book available'
     
@@ -35,11 +37,11 @@ class ReadingListItem:
         self.summary = kwargs.get('summary', 'TBA')
         self.genre = kwargs.get('genre')
 
-        self.available = kwargs.get('read', True)
+        self.available = kwargs.get('available', True)
     
     def config(self, **kwargs):
         for attrib, value in kwargs.items():
-            if attrib in self.__dict__:
+            if attrib in self.__dict__.keys():
                 self.__dict__[attrib] = value
             else:
                 print(f'Attribute {attrib} does not exist.')
