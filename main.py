@@ -64,6 +64,7 @@ btn_add_book = tk.Button(
 btn_add_book.grid(row=1, column=0, padx=10, pady=5)
 
 class AddDialog:
+    """Provides an interface for handling the modal in creating a new book item."""
     def __init__(self, root : tk.Tk):
         self.data = None
 
@@ -111,6 +112,7 @@ class AddDialog:
         frm_btn.pack(padx=20, pady=5)
 
         def pre_submit():
+            "Pre-checks the information inputted before packing them in a dictionary for processing."
 
             # Check if there is a title
             title = ent_title.get()
