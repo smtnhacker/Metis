@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter.filedialog import askopenfilename
+import json
 
 from metis import MetisClass, ReadingListItem
 
@@ -23,6 +25,47 @@ window.minsize(width=800, height=400)
 window.rowconfigure(0, minsize=100, weight=0)
 window.rowconfigure(1, minsize=300, weight=1)
 window.columnconfigure(0, minsize=500, weight=1)
+
+# ----- Get the data file ----- #
+def decode_collection(dct):
+    if '__ReadingListItem__' in dct:
+        return  ReadingListItem(**{key : value for key, value in dct.items() if key != '__ReadingListItem__'})
+    else:
+        return dct
+
+class CollectionEncoder(json.JSONEncoder):
+    def default(self, dct):
+        if isinstance(dct, ReadingListItem):
+            res = { '__ReadingListItem__' : True }
+            for key, value in dct.__dict__():
+                res[key] = value
+            return res
+        else:
+            return super().default(dct)
+
+def load_collection():
+    filepath = askopenfilename(
+        filetypes=[('JSON', '*.json'), ('All Files', '*.*')]
+    )
+    if not filepath:
+        messagebox.showerror(title='Error', message='No file uploaded.')
+        return None
+    with open(filepath, 'r') as data_file:
+        data = data_file.read()
+        try:
+            collection = json.loads(data, object_hook=decode_collection)
+        except ValueError as e:
+            messagebox.showerror(title='Error', message='Invalid file.')
+            print(e.message)
+            return None
+    return collection['collection'] 
+
+## CONTINUE FROM HERE !!!!!!!!!!!!!!!!!
+## Progress: Currently, this forces the user to upload an existing library.
+##           TODO: Create a new / save / load buttons and implement accordingly
+
+# currently unused!
+filepath = load_collection()
 
 # ------ Initialize Metis ----- #
 Metis = MetisClass(dummy_collection)
