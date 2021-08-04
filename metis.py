@@ -4,15 +4,25 @@ class MetisClass:
     """Provides an interface for handling the reading lists"""
     def __init__(self, collection=list()):
         self.collection = collection
-        self.availables = list(filter(lambda x : x.available, self.collection))
+        self.indices = { item.format_book() : index for index, item in enumerate(collection)}
+        self.availables = set(filter(lambda x : x.available, self.collection))
     
     def request_book(self):
         "Returns a book from the available collection"
         
         if self.availables:
-            return random.choice(self.availables).format_book()
+            return random.choice(list(self.availables)).format_book()
         else:
             return 'No book available'
+    
+    def toggle(self, item):
+        index = self.indices[item.format_book()]
+        self.collection[index].available = not self.collection[index].available
+
+        if self.collection[index].available:
+            self.availables.add(item)
+        else:
+            self.availables.remove(item)
 
 class ReadingListItem:
     """Describes a book a to read"""

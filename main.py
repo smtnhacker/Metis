@@ -64,10 +64,20 @@ class ListEntry:
         # --- Create the GUI --- #
         CLR_AVAILABLE = "#e4ffbd"
         CLR_UNAVAILABLE = "#ffbdbd"
+
+        def on_click(event):
+            Metis.toggle(item)
+            self.available = not self.available
+            self.frame.config(bg=CLR_AVAILABLE if self.available else CLR_UNAVAILABLE)
+            self.label.config(background=self.frame['bg'])
+
         self.frame.config(height=25, bg=CLR_AVAILABLE if self.available else CLR_UNAVAILABLE)
-        self.label = tk.Label(master=self.frame, text=self.item.format_book(), background=self.frame['bg'])
-        self.label.pack(padx=5, pady=5)
+        self.frame.bind("<Button-1>", on_click)
         self.frame.pack(fill=tk.X, padx=10, pady=5)
+
+        self.label = tk.Label(master=self.frame, text=self.item.format_book(), background=self.frame['bg'])
+        self.label.bind("<Button-1>", on_click)
+        self.label.pack(padx=5, pady=5)
 
 gui_list = [ListEntry(tk.Frame(frm_list), item) for item in Metis.collection]
 print(gui_list)
