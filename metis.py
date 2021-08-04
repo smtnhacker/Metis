@@ -25,6 +25,9 @@ class MetisClass:
             self.availables.add(item)
         else:
             self.availables.remove(item)
+    
+    def insert_item(self, data):
+        return True
 
 class ReadingListItem:
     """Describes a book a to read"""
