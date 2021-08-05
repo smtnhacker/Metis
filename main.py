@@ -1,7 +1,8 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename, asksaveasfilename
-import json
+import time, json
 
 from metis import MetisClass, ReadingListItem
 
@@ -29,7 +30,7 @@ def request_book():
 
     # Show in the GUI that the chosen book is not unavailable
     if requested_title != 'No book available':
-        item_list[requested_title].toggle()
+        Secretary.toggle(requested_title)
 
 btn_request_book = tk.Button(
     master=frm_main,
@@ -218,9 +219,65 @@ def CallCreateDialog():
 
 btn_add_book.config(command=CallCreateDialog)
 
-# ----- Set-up the Reading List GUI ----- #
+# ----- Create a Scrollable Canvas ----- #
+CANVAS_RELOAD = False
+
 frm_list = tk.Frame(master=window)
-frm_list.grid(row=1, column=0, sticky='ew')
+frm_list.grid(row=1, column=0, padx=20, pady=20, sticky='nsew')
+frm_list.columnconfigure(0, minsize=400, weight=1)
+frm_list.rowconfigure(0, minsize=400, weight=1)
+
+# Create a canvas to draw things on
+canvas_list = tk.Canvas(frm_list)
+canvas_list.grid(row=0, column=0, sticky='nsew')
+
+# Create the scrollbar
+scrollbar = ttk.Scrollbar(frm_list, orient=tk.VERTICAL, command=canvas_list.yview)
+scrollbar.grid(row=0, column=1, sticky='nsew')
+scrollbar.grid_remove()
+
+# Configure the canvas
+def check_scrollbar_visibility():
+    minHeight = frm_container.winfo_reqheight()
+    print(canvas_list.winfo_height(), minHeight)
+    if canvas_list.winfo_height() >= minHeight:
+        scrollbar.grid_remove()
+    else:
+        scrollbar.grid(row=0, column=1, sticky='nsew')
+
+def onCanvasConfigure(event):
+    canvas_list.configure(scrollregion = canvas_list.bbox('all'))
+    canvas_list.itemconfig('frame', width=canvas_list.winfo_width())
+
+# canvas_list.configure(yscrollcommand = lambda a, b : print(a, b))
+canvas_list.configure(yscrollcommand=scrollbar.set)
+canvas_list.bind('<Configure>', onCanvasConfigure)
+
+frm_container = tk.Frame(canvas_list, bg='blue')
+canvas_list.create_window((0,0), width=canvas_list.winfo_reqwidth(), window=frm_container, anchor='nw', tags='frame')
+
+# Make it scrollable using the mousewheel
+
+def on_mouse_wheel(event):
+    canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
+
+def recursive_binding(w):
+    w.bind('<MouseWheel>', on_mouse_wheel)
+    for child in w.winfo_children():
+        recursive_binding(child)
+
+def reload_canvas():
+    global scrollbar
+    global canvas_list
+    scrollbar.grid(row=0, column=1, sticky='nsew')
+    canvas_list.configure(scrollregion = canvas_list.bbox('all'))
+    canvas_list.config(yscrollcommand=scrollbar.set)
+    check_scrollbar_visibility()
+
+canvas_list.bind('<MouseWheel>', on_mouse_wheel)
+frm_container.bind('<MouseWheel>', on_mouse_wheel)
+
+# ----- Set-up the Reading List GUI ----- #
 
 class ListEntry:
     """An interactive Frame that represents a reading list item."""
@@ -259,8 +316,7 @@ class EntriesListHandler:
 
     def load(self):
         for item in Metis.collection:
-            self.frame_list[item.format_book()] = tk.Frame(frm_list)
-            self.item_list[item.format_book()] = ListEntry(self.frame_list[item.format_book()], item)
+            self.insert(item)
     
     def unload(self):
         for item in self.frame_list.values():
@@ -271,10 +327,20 @@ class EntriesListHandler:
     def reload(self):
         self.unload()
         self.load()
+        reload_canvas()
     
     def insert(self, item):
-        self.frame_list[item.format_book()] = tk.Frame(frm_list)
+        self.frame_list[item.format_book()] = tk.Frame(frm_container)
         self.item_list[item.format_book()] = ListEntry(self.frame_list[item.format_book()], item)
+
+        window.update()
+
+        # some shz on scrollbar
+        recursive_binding(self.frame_list[item.format_book()])
+        reload_canvas()
+    
+    def toggle(self, item_name):
+        self.item_list[item_name].toggle()
 
 Secretary = EntriesListHandler()
 
