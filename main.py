@@ -5,18 +5,6 @@ import json
 
 from metis import MetisClass, ReadingListItem
 
-# For initial testing while JSON
-# is not yet implemented
-
-dummy_values = [
-    ('The ONE Thing', 'Gary Keller et al', '2013'),
-    ('Atomic Habits', 'James Clear', '2018'),
-    ('Blink', 'Malcolm Gladwell', '2007'),
-    ('Extreme Ownership', 'Jocko Willink', '2015'),
-    ('The Power of Habit', 'Charles Dughigg', '2014')
-]
-dummy_collection = [ReadingListItem(title=x[0], author=x[1], date=x[2]) for x in dummy_values]
-
 # ----- Initialize the Window ----- #
 
 window = tk.Tk()
