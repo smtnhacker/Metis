@@ -215,7 +215,6 @@ def CallCreateDialog():
         messagebox.showerror(message='Book already exists.')
     else:
         Secretary.insert(new_item)
-        messagebox.showinfo(message='Book successfully added!')
 
 btn_add_book.config(command=CallCreateDialog)
 
