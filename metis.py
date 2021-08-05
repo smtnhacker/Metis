@@ -7,10 +7,6 @@ class MetisClass:
         self.indices = { item.format_book() : index for index, item in enumerate(collection)}
         self.availables = set(filter(lambda x : x.available, self.collection))
     
-    @classmethod
-    def dynamic_init(cls, filepath, decoder, encoder):
-        pass
-    
     def request_book(self):
         "Returns a book from the available collection"
         
