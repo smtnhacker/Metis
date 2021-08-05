@@ -73,7 +73,13 @@ class CollectionEncoder(json.JSONEncoder):
         else:
             return super().default(dct)
 
-def load_collection():
+def cmd_new_list():
+    global current_collection, Metis
+    current_collection = []
+    Metis = MetisClass(current_collection)
+    Secretary.reload()
+
+def cmd_load_list():
     filepath = askopenfilename(
         filetypes=[('JSON', '*.json'), ('All Files', '*.*')]
     )
@@ -88,18 +94,16 @@ def load_collection():
             messagebox.showerror(title='Error', message='Invalid file.')
             print(e.message)
             return None
-    return collection['collection'] 
-
-def cmd_new_list():
+    
     global current_collection, Metis
-    current_collection = []
+    current_collection = collection['collection']
     Metis = MetisClass(current_collection)
     Secretary.reload()
 
 btn_new_list = tk.Button(master=frm_main, text="New List", width=25, command=cmd_new_list)
 btn_new_list.grid(row=1, column=0, padx=10, pady=5)
 
-btn_load_list = tk.Button(master=frm_main, text="Load List", width=25)
+btn_load_list = tk.Button(master=frm_main, text="Load List", width=25, command=cmd_load_list)
 btn_load_list.grid(row=1, column=1, padx=10, pady=5)
 
 btn_save_list = tk.Button(master=frm_main, text="Save List", width=25)
@@ -260,13 +264,11 @@ class EntriesListHandler:
     
     def unload(self):
         for item in self.frame_list.values():
-            print(item)
             item.destroy()
         self.item_list = dict()
         self.frame_list = dict()
     
     def reload(self):
-        print("Reload called...")
         self.unload()
         self.load()
     
