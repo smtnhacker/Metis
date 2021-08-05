@@ -21,12 +21,50 @@ dummy_collection = [ReadingListItem(title=x[0], author=x[1], date=x[2]) for x in
 
 window = tk.Tk()
 window.title('Metis')
-window.minsize(width=800, height=400)
+window.minsize(width=920, height=400)
 window.rowconfigure(0, minsize=100, weight=0)
 window.rowconfigure(1, minsize=300, weight=1)
 window.columnconfigure(0, minsize=500, weight=1)
 
+# ------ Initialize Metis ----- #
+current_collection = []
+Metis = MetisClass(current_collection)
+
+# ----- Set-up the Request GUI ----- #
+frm_main = tk.Frame(window)
+frm_main.grid(row=0, column=0)
+
+def request_book():
+    requested_title = Metis.request_book()
+    ent_book_given.delete(0, tk.END)
+    ent_book_given.insert(0, requested_title)
+
+    # Show in the GUI that the chosen book is not unavailable
+    if requested_title != 'No book available':
+        item_list[requested_title].toggle()
+
+btn_request_book = tk.Button(
+    master=frm_main,
+    text="Click to request for a book",
+    width=25,
+    command=request_book
+)
+btn_request_book.grid(row=0, column=0, padx=10, pady=10)
+
+ent_book_given = tk.Entry(master=frm_main,)
+ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
+ent_book_given.grid(row=0, column=1, columnspan=3, padx=10, pady=10, sticky='ew')
+
 # ----- Get the data file ----- #
+btn_new_list = tk.Button(master=frm_main, text="New List", width=25)
+btn_new_list.grid(row=1, column=0, padx=10, pady=5)
+
+btn_load_list = tk.Button(master=frm_main, text="Load List", width=25)
+btn_load_list.grid(row=1, column=1, padx=10, pady=5)
+
+btn_save_list = tk.Button(master=frm_main, text="Save List", width=25)
+btn_save_list.grid(row=1, column=2, padx=10, pady=5)
+
 def decode_collection(dct):
     if '__ReadingListItem__' in dct:
         return  ReadingListItem(**{key : value for key, value in dct.items() if key != '__ReadingListItem__'})
@@ -60,51 +98,9 @@ def load_collection():
             return None
     return collection['collection'] 
 
-## CONTINUE FROM HERE !!!!!!!!!!!!!!!!!
-## Progress: Currently, this forces the user to upload an existing library.
-##           TODO: Create a new / save / load buttons and implement accordingly
-
-# currently unused!
-filepath = load_collection()
-
-# ------ Initialize Metis ----- #
-Metis = MetisClass(dummy_collection)
-
-# ----- Set-up the Request GUI ----- #
-frm_main = tk.Frame(window)
-frm_main.grid(row=0, column=0)
-
-def request_book():
-    requested_title = Metis.request_book()
-    ent_book_given.delete(0, tk.END)
-    ent_book_given.insert(0, requested_title)
-
-    # Show in the GUI that the chosen book is not unavailable
-    if requested_title != 'No book available':
-        item_list[requested_title].toggle()
-
-btn_request_book = tk.Button(
-    master=frm_main,
-    text="Click to request for a book",
-    width=25,
-    command=request_book
-)
-btn_request_book.grid(row=0, column=0, padx=10, pady=10)
-
-ent_book_given = tk.Entry(
-    master=frm_main,
-    width=60
-)
-ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
-ent_book_given.grid(row=0, column=1, padx=10, pady=10)
-
 # ----- Add Book Modal ----- #
-btn_add_book = tk.Button(
-    master=frm_main,
-    text="Add Book",
-    width=25,
-)
-btn_add_book.grid(row=1, column=0, padx=10, pady=5)
+btn_add_book = tk.Button(master=frm_main, text="Add Book", width=25)
+btn_add_book.grid(row=1, column=3, padx=10, pady=5)
 
 class AddDialog:
     """Provides an interface for handling the modal in creating a new book item."""
