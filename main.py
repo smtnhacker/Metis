@@ -239,7 +239,6 @@ scrollbar.grid_remove()
 # Configure the canvas
 def check_scrollbar_visibility():
     minHeight = frm_container.winfo_reqheight()
-    print(canvas_list.winfo_height(), minHeight)
     if canvas_list.winfo_height() >= minHeight:
         scrollbar.grid_remove()
     else:
@@ -249,11 +248,10 @@ def onCanvasConfigure(event):
     canvas_list.configure(scrollregion = canvas_list.bbox('all'))
     canvas_list.itemconfig('frame', width=canvas_list.winfo_width())
 
-# canvas_list.configure(yscrollcommand = lambda a, b : print(a, b))
 canvas_list.configure(yscrollcommand=scrollbar.set)
 canvas_list.bind('<Configure>', onCanvasConfigure)
 
-frm_container = tk.Frame(canvas_list, bg='blue')
+frm_container = tk.Frame(canvas_list)
 canvas_list.create_window((0,0), width=canvas_list.winfo_reqwidth(), window=frm_container, anchor='nw', tags='frame')
 
 # Make it scrollable using the mousewheel
