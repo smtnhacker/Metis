@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 import json
 
 from metis import MetisClass, ReadingListItem
@@ -55,7 +55,7 @@ class CollectionEncoder(json.JSONEncoder):
     def default(self, dct):
         if isinstance(dct, ReadingListItem):
             res = { '__ReadingListItem__' : True }
-            for key, value in dct.__dict__():
+            for key, value in dct.__dict__.items():
                 res[key] = value
             return res
         else:
@@ -69,10 +69,9 @@ def cmd_new_list():
 
 def cmd_load_list():
     filepath = askopenfilename(
-        filetypes=[('JSON', '*.json'), ('All Files', '*.*')]
+        filetypes=[('JSON Files', '*.json'), ('All Files', '*.*')]
     )
     if not filepath:
-        messagebox.showerror(title='Error', message='No file uploaded.')
         return None
     with open(filepath, 'r') as data_file:
         data = data_file.read()
@@ -84,9 +83,22 @@ def cmd_load_list():
             return None
     
     global current_collection, Metis
-    current_collection = collection['collection']
+    try:
+        current_collection = collection[:]
+    except TypeError:
+        current_collection = collection['collection']
     Metis = MetisClass(current_collection)
     Secretary.reload()
+
+def cmd_save_list():
+    filepath = asksaveasfilename(
+        defaultextension='json',
+        filetypes=[('JSON Files', '*.json'), ('All Files', '*.*')],
+    )
+    if not filepath:
+        return
+    with open(filepath, 'w') as output_file:
+        json.dump(current_collection, output_file, indent=4, cls=CollectionEncoder)
 
 btn_new_list = tk.Button(master=frm_main, text="New List", width=25, command=cmd_new_list)
 btn_new_list.grid(row=1, column=0, padx=10, pady=5)
@@ -94,7 +106,7 @@ btn_new_list.grid(row=1, column=0, padx=10, pady=5)
 btn_load_list = tk.Button(master=frm_main, text="Load List", width=25, command=cmd_load_list)
 btn_load_list.grid(row=1, column=1, padx=10, pady=5)
 
-btn_save_list = tk.Button(master=frm_main, text="Save List", width=25)
+btn_save_list = tk.Button(master=frm_main, text="Save List", width=25, command=cmd_save_list)
 btn_save_list.grid(row=1, column=2, padx=10, pady=5)
 
 # ----- Add Book Modal ----- #
