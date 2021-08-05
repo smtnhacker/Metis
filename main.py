@@ -220,8 +220,6 @@ def CallCreateDialog():
 btn_add_book.config(command=CallCreateDialog)
 
 # ----- Create a Scrollable Canvas ----- #
-CANVAS_RELOAD = False
-
 frm_list = tk.Frame(master=window)
 frm_list.grid(row=1, column=0, padx=20, pady=20, sticky='nsew')
 frm_list.columnconfigure(0, minsize=400, weight=1)
@@ -237,12 +235,17 @@ scrollbar.grid(row=0, column=1, sticky='nsew')
 scrollbar.grid_remove()
 
 # Configure the canvas
+SCROLLABLE = False
+
 def check_scrollbar_visibility():
+    global SCROLLABLE
     minHeight = frm_container.winfo_reqheight()
     if canvas_list.winfo_height() >= minHeight:
         scrollbar.grid_remove()
+        SCROLLABLE = False
     else:
         scrollbar.grid(row=0, column=1, sticky='nsew')
+        SCROLLABLE = True
 
 def onCanvasConfigure(event):
     canvas_list.configure(scrollregion = canvas_list.bbox('all'))
@@ -257,7 +260,9 @@ canvas_list.create_window((0,0), width=canvas_list.winfo_reqwidth(), window=frm_
 # Make it scrollable using the mousewheel
 
 def on_mouse_wheel(event):
-    canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
+    global SCROLLABLE
+    if SCROLLABLE:
+        canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
 
 def recursive_binding(w):
     w.bind('<MouseWheel>', on_mouse_wheel)
