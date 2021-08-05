@@ -56,14 +56,6 @@ ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
 ent_book_given.grid(row=0, column=1, columnspan=3, padx=10, pady=10, sticky='ew')
 
 # ----- Get the data file ----- #
-btn_new_list = tk.Button(master=frm_main, text="New List", width=25)
-btn_new_list.grid(row=1, column=0, padx=10, pady=5)
-
-btn_load_list = tk.Button(master=frm_main, text="Load List", width=25)
-btn_load_list.grid(row=1, column=1, padx=10, pady=5)
-
-btn_save_list = tk.Button(master=frm_main, text="Save List", width=25)
-btn_save_list.grid(row=1, column=2, padx=10, pady=5)
 
 def decode_collection(dct):
     if '__ReadingListItem__' in dct:
@@ -97,6 +89,21 @@ def load_collection():
             print(e.message)
             return None
     return collection['collection'] 
+
+def cmd_new_list():
+    global current_collection, Metis
+    current_collection = []
+    Metis = MetisClass(current_collection)
+    Secretary.reload()
+
+btn_new_list = tk.Button(master=frm_main, text="New List", width=25, command=cmd_new_list)
+btn_new_list.grid(row=1, column=0, padx=10, pady=5)
+
+btn_load_list = tk.Button(master=frm_main, text="Load List", width=25)
+btn_load_list.grid(row=1, column=1, padx=10, pady=5)
+
+btn_save_list = tk.Button(master=frm_main, text="Save List", width=25)
+btn_save_list.grid(row=1, column=2, padx=10, pady=5)
 
 # ----- Add Book Modal ----- #
 btn_add_book = tk.Button(master=frm_main, text="Add Book", width=25)
@@ -202,7 +209,7 @@ def CallCreateDialog():
     if not new_item:
         messagebox.showerror(message='Book already exists.')
     else:
-        item_list[new_item.format_book()] = ListEntry(tk.Frame(frm_list), new_item)
+        Secretary.insert(new_item)
         messagebox.showinfo(message='Book successfully added!')
 
 btn_add_book.config(command=CallCreateDialog)
@@ -241,7 +248,33 @@ class ListEntry:
         self.frame.config(bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
         self.label.config(background=self.frame['bg'])
 
-item_list = { item.format_book() : ListEntry(tk.Frame(frm_list), item) for item in Metis.collection}
+class EntriesListHandler:
+    def __init__(self):
+        self.item_list = dict()
+        self.frame_list = dict()
+
+    def load(self):
+        for item in Metis.collection:
+            self.frame_list[item.format_book()] = tk.Frame(frm_list)
+            self.item_list[item.format_book()] = ListEntry(self.frame_list[item.format_book()], item)
+    
+    def unload(self):
+        for item in self.frame_list.values():
+            print(item)
+            item.destroy()
+        self.item_list = dict()
+        self.frame_list = dict()
+    
+    def reload(self):
+        print("Reload called...")
+        self.unload()
+        self.load()
+    
+    def insert(self, item):
+        self.frame_list[item.format_book()] = tk.Frame(frm_list)
+        self.item_list[item.format_book()] = ListEntry(self.frame_list[item.format_book()], item)
+
+Secretary = EntriesListHandler()
 
 # Place this portion at the end of the program
 window.mainloop()
