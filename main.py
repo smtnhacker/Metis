@@ -44,71 +44,164 @@ ent_book_given = tk.Entry(master=frm_main,)
 ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
 ent_book_given.grid(row=0, column=1, columnspan=3, padx=10, pady=10, sticky='ew')
 
+# ----- Set-up the Reading List GUI ----- #
+
+class ListEntry:
+    """An interactive Frame that represents a reading list item."""
+
+    COLOR_AVAILABLE = "#e4ffbd"
+    COLOR_UNAVAILABLE = "#ffbdbd"
+
+    def __init__(self, frame : tk.Frame, item : ReadingListItem):
+        self.frame = frame
+        self.item = item
+        self.available = item.available
+    
+        # --- Create the GUI --- #
+
+        def on_click(event):
+            Metis.toggle(self.item)
+            self.toggle()
+
+        self.frame.config(height=25, bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
+        self.frame.bind("<Button-1>", on_click)
+        self.frame.pack(fill=tk.X, padx=10, pady=5)
+
+        self.label = tk.Label(master=self.frame, text=self.item.format_book(), background=self.frame['bg'])
+        self.label.bind("<Button-1>", on_click)
+        self.label.pack(padx=5, pady=5)
+    
+    def toggle(self):
+        self.available = not self.available
+        self.frame.config(bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
+        self.label.config(background=self.frame['bg'])
+
+class EntriesListHandler:
+    def __init__(self):
+        self.item_list = dict()
+        self.frame_list = dict()
+
+    def load(self):
+        for item in Metis.collection:
+            self.insert(item)
+    
+    def unload(self):
+        for item in self.frame_list.values():
+            item.destroy()
+        self.item_list = dict()
+        self.frame_list = dict()
+    
+    def reload(self):
+        self.unload()
+        self.load()
+        reload_canvas()
+    
+    def insert(self, item):
+        self.frame_list[item.format_book()] = tk.Frame(frm_container)
+        self.item_list[item.format_book()] = ListEntry(self.frame_list[item.format_book()], item)
+
+        window.update()
+
+        # some shz on scrollbar
+        recursive_binding(self.frame_list[item.format_book()])
+        reload_canvas()
+    
+    def toggle(self, item_name):
+        self.item_list[item_name].toggle()
+
+Secretary = EntriesListHandler()
+
 # ----- Get the data file ----- #
 
-def decode_collection(dct):
-    if '__ReadingListItem__' in dct:
-        return  ReadingListItem(**{key : value for key, value in dct.items() if key != '__ReadingListItem__'})
-    else:
-        return dct
+class DialogHandler:
+    """Handles the creation and management of dialog boxes."""
 
-class CollectionEncoder(json.JSONEncoder):
-    def default(self, dct):
-        if isinstance(dct, ReadingListItem):
-            res = { '__ReadingListItem__' : True }
-            for key, value in dct.__dict__.items():
-                res[key] = value
-            return res
+    def __init__(self, Secretary, **kwargs):
+        # Setup the New List Button
+        self.new_list_btn = kwargs.get('new_list_btn')
+        if self.new_list_btn:
+            self.new_list_btn.config(command=lambda : self.cmd_new_list(Secretary))
+        
+        # Setup the Save List Button
+        self.save_list_btn = kwargs.get('save_list_btn')
+        if self.save_list_btn:
+            self.save_list_btn.config(command=self.cmd_save_list)
+        
+        #Setup the Load List Button
+        self.load_list_btn = kwargs.get('load_list_btn')
+        if self.load_list_btn:
+            self.load_list_btn.config(command=lambda : self.cmd_load_list(Secretary))
+            
+    @staticmethod
+    def decode_collection(dct):
+        if '__ReadingListItem__' in dct:
+            return  ReadingListItem(**{key : value for key, value in dct.items() if key != '__ReadingListItem__'})
         else:
-            return super().default(dct)
+            return dct
 
-def cmd_new_list():
-    global current_collection, Metis
-    current_collection = []
-    Metis = MetisClass(current_collection)
-    Secretary.reload()
+    class CollectionEncoder(json.JSONEncoder):
+        def default(self, dct):
+            if isinstance(dct, ReadingListItem):
+                res = { '__ReadingListItem__' : True }
+                for key, value in dct.__dict__.items():
+                    res[key] = value
+                return res
+            else:
+                return super().default(dct)
 
-def cmd_load_list():
-    filepath = askopenfilename(
-        filetypes=[('JSON Files', '*.json'), ('All Files', '*.*')]
-    )
-    if not filepath:
-        return None
-    with open(filepath, 'r') as data_file:
-        data = data_file.read()
-        try:
-            collection = json.loads(data, object_hook=decode_collection)
-        except ValueError as e:
-            messagebox.showerror(title='Error', message='Invalid file.')
-            print(e.message)
+
+    def cmd_new_list(self, Secretary):
+        global current_collection, Metis
+        current_collection = []
+        Metis = MetisClass(current_collection)
+        Secretary.reload()
+
+    def cmd_load_list(self, Secretary):
+        filepath = askopenfilename(
+            filetypes=[('JSON Files', '*.json'), ('All Files', '*.*')]
+        )
+        if not filepath:
             return None
-    
-    global current_collection, Metis
-    try:
-        current_collection = collection[:]
-    except TypeError:
-        current_collection = collection['collection']
-    Metis = MetisClass(current_collection)
-    Secretary.reload()
+        with open(filepath, 'r') as data_file:
+            data = data_file.read()
+            try:
+                collection = json.loads(data, object_hook=self.decode_collection)
+            except ValueError as e:
+                messagebox.showerror(title='Error', message='Invalid file.')
+                print(e.message)
+                return None
+        
+        global current_collection, Metis
+        try:
+            current_collection = collection[:]
+        except TypeError:
+            current_collection = collection['collection']
+        Metis = MetisClass(current_collection)
+        Secretary.reload()
 
-def cmd_save_list():
-    filepath = asksaveasfilename(
-        defaultextension='json',
-        filetypes=[('JSON Files', '*.json'), ('All Files', '*.*')],
-    )
-    if not filepath:
-        return
-    with open(filepath, 'w') as output_file:
-        json.dump(current_collection, output_file, indent=4, cls=CollectionEncoder)
+    def cmd_save_list(self):
+        filepath = asksaveasfilename(
+            defaultextension='json',
+            filetypes=[('JSON Files', '*.json'), ('All Files', '*.*')],
+        )
+        if not filepath:
+            return
+        with open(filepath, 'w') as output_file:
+            json.dump(current_collection, output_file, indent=4, cls=self.CollectionEncoder)
 
-btn_new_list = tk.Button(master=frm_main, text="New List", width=25, command=cmd_new_list)
+btn_new_list = tk.Button(master=frm_main, text="New List", width=25)
 btn_new_list.grid(row=1, column=0, padx=10, pady=5)
 
-btn_load_list = tk.Button(master=frm_main, text="Load List", width=25, command=cmd_load_list)
+btn_load_list = tk.Button(master=frm_main, text="Load List", width=25)
 btn_load_list.grid(row=1, column=1, padx=10, pady=5)
 
-btn_save_list = tk.Button(master=frm_main, text="Save List", width=25, command=cmd_save_list)
+btn_save_list = tk.Button(master=frm_main, text="Save List", width=25)
 btn_save_list.grid(row=1, column=2, padx=10, pady=5)
+
+Dialogs = DialogHandler(Secretary, 
+                        new_list_btn=btn_new_list, 
+                        save_list_btn=btn_save_list, 
+                        load_list_btn=btn_load_list)
 
 # ----- Add Book Modal ----- #
 btn_add_book = tk.Button(master=frm_main, text="Add Book", width=25)
@@ -279,72 +372,6 @@ def reload_canvas():
 canvas_list.bind('<MouseWheel>', on_mouse_wheel)
 frm_container.bind('<MouseWheel>', on_mouse_wheel)
 
-# ----- Set-up the Reading List GUI ----- #
-
-class ListEntry:
-    """An interactive Frame that represents a reading list item."""
-
-    COLOR_AVAILABLE = "#e4ffbd"
-    COLOR_UNAVAILABLE = "#ffbdbd"
-
-    def __init__(self, frame : tk.Frame, item : ReadingListItem):
-        self.frame = frame
-        self.item = item
-        self.available = item.available
-    
-        # --- Create the GUI --- #
-
-        def on_click(event):
-            Metis.toggle(self.item)
-            self.toggle()
-
-        self.frame.config(height=25, bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
-        self.frame.bind("<Button-1>", on_click)
-        self.frame.pack(fill=tk.X, padx=10, pady=5)
-
-        self.label = tk.Label(master=self.frame, text=self.item.format_book(), background=self.frame['bg'])
-        self.label.bind("<Button-1>", on_click)
-        self.label.pack(padx=5, pady=5)
-    
-    def toggle(self):
-        self.available = not self.available
-        self.frame.config(bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
-        self.label.config(background=self.frame['bg'])
-
-class EntriesListHandler:
-    def __init__(self):
-        self.item_list = dict()
-        self.frame_list = dict()
-
-    def load(self):
-        for item in Metis.collection:
-            self.insert(item)
-    
-    def unload(self):
-        for item in self.frame_list.values():
-            item.destroy()
-        self.item_list = dict()
-        self.frame_list = dict()
-    
-    def reload(self):
-        self.unload()
-        self.load()
-        reload_canvas()
-    
-    def insert(self, item):
-        self.frame_list[item.format_book()] = tk.Frame(frm_container)
-        self.item_list[item.format_book()] = ListEntry(self.frame_list[item.format_book()], item)
-
-        window.update()
-
-        # some shz on scrollbar
-        recursive_binding(self.frame_list[item.format_book()])
-        reload_canvas()
-    
-    def toggle(self, item_name):
-        self.item_list[item_name].toggle()
-
-Secretary = EntriesListHandler()
 
 # Place this portion at the end of the program
 window.mainloop()
