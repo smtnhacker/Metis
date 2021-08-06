@@ -2,9 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename, asksaveasfilename
-import time, json
 
-from metis import MetisClass, ReadingListItem
+from utils.metis import MetisClass, ReadingListItem
+from utils.EntriesListHandler import *
+from utils.DialogHandler import *
 
 # ----- Initialize the Window ----- #
 
@@ -18,6 +19,7 @@ window.columnconfigure(0, minsize=500, weight=1)
 # ------ Initialize Metis ----- #
 Metis = MetisClass()
 
+# ------------- GUI INITIALIZATION -------------- #
 # ----- Set-up the Request GUI ----- #
 frm_main = tk.Frame(window)
 frm_main.grid(row=0, column=0)
@@ -43,147 +45,70 @@ ent_book_given = tk.Entry(master=frm_main,)
 ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
 ent_book_given.grid(row=0, column=1, columnspan=3, padx=10, pady=10, sticky='ew')
 
-# ----- Set-up the Reading List GUI ----- #
+# ----- Create a Scrollable Canvas ----- #
+frm_list = tk.Frame(master=window)
+frm_list.grid(row=1, column=0, padx=20, pady=20, sticky='nsew')
+frm_list.columnconfigure(0, minsize=400, weight=1)
+frm_list.rowconfigure(0, minsize=400, weight=1)
 
-class ListEntry:
-    """An interactive Frame that represents a reading list item."""
+# Create a canvas to draw things on
+canvas_list = tk.Canvas(frm_list)
+canvas_list.grid(row=0, column=0, sticky='nsew')
 
-    COLOR_AVAILABLE = "#e4ffbd"
-    COLOR_UNAVAILABLE = "#ffbdbd"
+# Create the scrollbar
+scrollbar = ttk.Scrollbar(frm_list, orient=tk.VERTICAL, command=canvas_list.yview)
+scrollbar.grid(row=0, column=1, sticky='nsew')
+scrollbar.grid_remove()
 
-    def __init__(self, frame : tk.Frame, item : ReadingListItem):
-        self.frame = frame
-        self.item = item
-        self.available = item.available
-    
-        # --- Create the GUI --- #
+# Configure the canvas
+SCROLLABLE = False
 
-        def on_click(event):
-            Metis.toggle(self.item)
-            self.toggle()
+def check_scrollbar_visibility():
+    global SCROLLABLE
+    minHeight = frm_container.winfo_reqheight()
+    if canvas_list.winfo_height() >= minHeight:
+        scrollbar.grid_remove()
+        SCROLLABLE = False
+    else:
+        scrollbar.grid(row=0, column=1, sticky='nsew')
+        SCROLLABLE = True
 
-        self.frame.config(height=25, bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
-        self.frame.bind("<Button-1>", on_click)
-        self.frame.pack(fill=tk.X, padx=10, pady=5)
+def onCanvasConfigure(event):
+    canvas_list.configure(scrollregion = canvas_list.bbox('all'))
+    canvas_list.itemconfig('frame', width=canvas_list.winfo_width())
 
-        self.label = tk.Label(master=self.frame, text=self.item.format_book(), background=self.frame['bg'])
-        self.label.bind("<Button-1>", on_click)
-        self.label.pack(padx=5, pady=5)
-    
-    def toggle(self):
-        self.available = not self.available
-        self.frame.config(bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
-        self.label.config(background=self.frame['bg'])
+canvas_list.configure(yscrollcommand=scrollbar.set)
+canvas_list.bind('<Configure>', onCanvasConfigure)
 
-class EntriesListHandler:
-    def __init__(self):
-        self.item_list = dict()
-        self.frame_list = dict()
+frm_container = tk.Frame(canvas_list)
+canvas_list.create_window((0,0), width=canvas_list.winfo_reqwidth(), window=frm_container, anchor='nw', tags='frame')
 
-    def load(self):
-        for item in Metis.collection:
-            self.insert(item)
-    
-    def unload(self):
-        for item in self.frame_list.values():
-            item.destroy()
-        self.item_list = dict()
-        self.frame_list = dict()
-    
-    def reload(self):
-        self.unload()
-        self.load()
-        reload_canvas()
-    
-    def insert(self, item):
-        self.frame_list[item.format_book()] = tk.Frame(frm_container)
-        self.item_list[item.format_book()] = ListEntry(self.frame_list[item.format_book()], item)
+# Make it scrollable using the mousewheel
 
-        window.update()
+def on_mouse_wheel(event):
+    if SCROLLABLE:
+        canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
 
-        # some shz on scrollbar
-        recursive_binding(self.frame_list[item.format_book()])
-        reload_canvas()
-    
-    def toggle(self, item_name):
-        self.item_list[item_name].toggle()
+def recursive_binding(w):
+    w.bind('<MouseWheel>', on_mouse_wheel)
+    for child in w.winfo_children():
+        recursive_binding(child)
 
-Secretary = EntriesListHandler()
+def reload_canvas():
+    scrollbar.grid(row=0, column=1, sticky='nsew')
+    canvas_list.configure(scrollregion=canvas_list.bbox('all'))
+    canvas_list.config(yscrollcommand=scrollbar.set)
+    check_scrollbar_visibility()
+
+canvas_list.bind('<MouseWheel>', on_mouse_wheel)
+frm_container.bind('<MouseWheel>', on_mouse_wheel)
+
+# ----- Set-up the Reading List ----- #
+
+Secretary = EntriesListHandler(window, Metis, frm_container, recursive_binding, reload_canvas)
 
 # ----- Get the data file ----- #
 
-class DialogHandler:
-    """Handles the creation and management of dialog boxes."""
-
-    def __init__(self, Secretary, **kwargs):
-        # Setup the New List Button
-        self.new_list_btn = kwargs.get('new_list_btn')
-        if self.new_list_btn:
-            self.new_list_btn.config(command=lambda : self.cmd_new_list(Secretary))
-        
-        # Setup the Save List Button
-        self.save_list_btn = kwargs.get('save_list_btn')
-        if self.save_list_btn:
-            self.save_list_btn.config(command=self.cmd_save_list)
-        
-        #Setup the Load List Button
-        self.load_list_btn = kwargs.get('load_list_btn')
-        if self.load_list_btn:
-            self.load_list_btn.config(command=lambda : self.cmd_load_list(Secretary))
-            
-    @staticmethod
-    def decode_collection(dct):
-        if '__ReadingListItem__' in dct:
-            return  ReadingListItem(**{key : value for key, value in dct.items() if key != '__ReadingListItem__'})
-        else:
-            return dct
-
-    class CollectionEncoder(json.JSONEncoder):
-        def default(self, dct):
-            if isinstance(dct, ReadingListItem):
-                res = { '__ReadingListItem__' : True }
-                for key, value in dct.__dict__.items():
-                    res[key] = value
-                return res
-            else:
-                return super().default(dct)
-
-
-    def cmd_new_list(self, Secretary):
-        Metis.reload()
-        Secretary.reload()
-
-    def cmd_load_list(self, Secretary):
-        filepath = askopenfilename(
-            filetypes=[('JSON Files', '*.json'), ('All Files', '*.*')]
-        )
-        if not filepath:
-            return None
-        with open(filepath, 'r') as data_file:
-            data = data_file.read()
-            try:
-                collection = json.loads(data, object_hook=self.decode_collection)
-            except ValueError as e:
-                messagebox.showerror(title='Error', message='Invalid file.')
-                print(e.message)
-                return None
-        
-        try:
-            current_collection = collection[:]
-        except TypeError:
-            current_collection = collection['collection']
-        Metis.reload(current_collection)
-        Secretary.reload()
-
-    def cmd_save_list(self):
-        filepath = asksaveasfilename(
-            defaultextension='json',
-            filetypes=[('JSON Files', '*.json'), ('All Files', '*.*')],
-        )
-        if not filepath:
-            return
-        with open(filepath, 'w') as output_file:
-            json.dump(Metis.collection, output_file, indent=4, cls=self.CollectionEncoder)
 
 btn_new_list = tk.Button(master=frm_main, text="New List", width=25)
 btn_new_list.grid(row=1, column=0, padx=10, pady=5)
@@ -194,7 +119,7 @@ btn_load_list.grid(row=1, column=1, padx=10, pady=5)
 btn_save_list = tk.Button(master=frm_main, text="Save List", width=25)
 btn_save_list.grid(row=1, column=2, padx=10, pady=5)
 
-Dialogs = DialogHandler(Secretary, 
+Dialogs = DialogHandler(Metis, Secretary, 
                         new_list_btn=btn_new_list, 
                         save_list_btn=btn_save_list, 
                         load_list_btn=btn_load_list)
@@ -306,68 +231,6 @@ def CallCreateDialog():
         Secretary.insert(new_item)
 
 btn_add_book.config(command=CallCreateDialog)
-
-# ----- Create a Scrollable Canvas ----- #
-frm_list = tk.Frame(master=window)
-frm_list.grid(row=1, column=0, padx=20, pady=20, sticky='nsew')
-frm_list.columnconfigure(0, minsize=400, weight=1)
-frm_list.rowconfigure(0, minsize=400, weight=1)
-
-# Create a canvas to draw things on
-canvas_list = tk.Canvas(frm_list)
-canvas_list.grid(row=0, column=0, sticky='nsew')
-
-# Create the scrollbar
-scrollbar = ttk.Scrollbar(frm_list, orient=tk.VERTICAL, command=canvas_list.yview)
-scrollbar.grid(row=0, column=1, sticky='nsew')
-scrollbar.grid_remove()
-
-# Configure the canvas
-SCROLLABLE = False
-
-def check_scrollbar_visibility():
-    global SCROLLABLE
-    minHeight = frm_container.winfo_reqheight()
-    if canvas_list.winfo_height() >= minHeight:
-        scrollbar.grid_remove()
-        SCROLLABLE = False
-    else:
-        scrollbar.grid(row=0, column=1, sticky='nsew')
-        SCROLLABLE = True
-
-def onCanvasConfigure(event):
-    canvas_list.configure(scrollregion = canvas_list.bbox('all'))
-    canvas_list.itemconfig('frame', width=canvas_list.winfo_width())
-
-canvas_list.configure(yscrollcommand=scrollbar.set)
-canvas_list.bind('<Configure>', onCanvasConfigure)
-
-frm_container = tk.Frame(canvas_list)
-canvas_list.create_window((0,0), width=canvas_list.winfo_reqwidth(), window=frm_container, anchor='nw', tags='frame')
-
-# Make it scrollable using the mousewheel
-
-def on_mouse_wheel(event):
-    global SCROLLABLE
-    if SCROLLABLE:
-        canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
-
-def recursive_binding(w):
-    w.bind('<MouseWheel>', on_mouse_wheel)
-    for child in w.winfo_children():
-        recursive_binding(child)
-
-def reload_canvas():
-    global scrollbar
-    global canvas_list
-    scrollbar.grid(row=0, column=1, sticky='nsew')
-    canvas_list.configure(scrollregion = canvas_list.bbox('all'))
-    canvas_list.config(yscrollcommand=scrollbar.set)
-    check_scrollbar_visibility()
-
-canvas_list.bind('<MouseWheel>', on_mouse_wheel)
-frm_container.bind('<MouseWheel>', on_mouse_wheel)
-
 
 # Place this portion at the end of the program
 window.mainloop()
