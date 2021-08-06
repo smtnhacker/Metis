@@ -17,14 +17,21 @@ window.rowconfigure(1, minsize=300, weight=1)
 window.columnconfigure(0, minsize=500, weight=1)
 
 # ------ Initialize Metis ----- #
+
 Metis = MetisClass()
 
+# ----------------------------------------------- #
 # ------------- GUI INITIALIZATION -------------- #
+# ----------------------------------------------- #
+
 # ----- Set-up the Request GUI ----- #
+
 frm_main = tk.Frame(window)
 frm_main.grid(row=0, column=0)
 
 def request_book():
+    "Requests a title (string) from Metis"
+
     requested_title = Metis.request_book()
     ent_book_given.delete(0, tk.END)
     ent_book_given.insert(0, requested_title)
@@ -46,6 +53,7 @@ ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
 ent_book_given.grid(row=0, column=1, columnspan=3, padx=10, pady=10, sticky='ew')
 
 # ----- Create a Scrollable Canvas ----- #
+
 frm_list = tk.Frame(master=window)
 frm_list.grid(row=1, column=0, padx=20, pady=20, sticky='nsew')
 frm_list.columnconfigure(0, minsize=400, weight=1)
@@ -64,8 +72,11 @@ scrollbar.grid_remove()
 SCROLLABLE = False
 
 def check_scrollbar_visibility():
+    "Hides / Unhides the scrollbar when necessary"
+
     global SCROLLABLE
     minHeight = frm_container.winfo_reqheight()
+
     if canvas_list.winfo_height() >= minHeight:
         scrollbar.grid_remove()
         SCROLLABLE = False
@@ -90,11 +101,15 @@ def on_mouse_wheel(event):
         canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
 
 def recursive_binding(w):
+    "Recursion to bind a widget and all its children to be scrollable"
+
     w.bind('<MouseWheel>', on_mouse_wheel)
     for child in w.winfo_children():
         recursive_binding(child)
 
 def reload_canvas():
+    "Re-calibrates the canvas to update the scrollbar"
+
     scrollbar.grid(row=0, column=1, sticky='nsew')
     canvas_list.configure(scrollregion=canvas_list.bbox('all'))
     canvas_list.config(yscrollcommand=scrollbar.set)
@@ -103,12 +118,7 @@ def reload_canvas():
 canvas_list.bind('<MouseWheel>', on_mouse_wheel)
 frm_container.bind('<MouseWheel>', on_mouse_wheel)
 
-# ----- Set-up the Reading List ----- #
-
-Secretary = EntriesListHandler(window, Metis, frm_container, recursive_binding, reload_canvas)
-
-# ----- Get the data file ----- #
-
+# ----- Create the File Handling Buttons ----- #
 
 btn_new_list = tk.Button(master=frm_main, text="New List", width=25)
 btn_new_list.grid(row=1, column=0, padx=10, pady=5)
@@ -119,17 +129,40 @@ btn_load_list.grid(row=1, column=1, padx=10, pady=5)
 btn_save_list = tk.Button(master=frm_main, text="Save List", width=25)
 btn_save_list.grid(row=1, column=2, padx=10, pady=5)
 
-Dialogs = DialogHandler(Metis, Secretary, 
-                        new_list_btn=btn_new_list, 
-                        save_list_btn=btn_save_list, 
-                        load_list_btn=btn_load_list)
+# ----- Create the Add Book Buttons ----- #
 
-# ----- Add Book Modal ----- #
 btn_add_book = tk.Button(master=frm_main, text="Add Book", width=25)
 btn_add_book.grid(row=1, column=3, padx=10, pady=5)
 
+# --------------------------------------------------- #
+# ------------- HANDLE THE INTERACTIONS ------------- #
+# --------------------------------------------------- #
+
+# ----- Set-up the Reading List Backend ----- #
+
+Secretary = EntriesListHandler(
+                window=window, 
+                Metis=Metis, 
+                master=frm_container, 
+                binding=recursive_binding, 
+                reloader=reload_canvas
+            )
+
+# ----- Set up the File Handling Dialog Boxes ----- #
+
+Dialogs = DialogHandler(
+            Metis, 
+            Secretary, 
+            new_list_btn=btn_new_list, 
+            save_list_btn=btn_save_list, 
+            load_list_btn=btn_load_list
+        )
+
+# ----- Setup Add Book Modal ----- #
+
 class AddDialog:
     """Provides an interface for handling the modal in creating a new book item."""
+
     def __init__(self, root : tk.Tk):
         self.data = None
 
@@ -217,6 +250,8 @@ class AddDialog:
         self.dismiss(modal)
 
 def CallCreateDialog():
+    "Creates a dialog box for adding a new book entry"
+
     modal = AddDialog(window)
 
     # Verify if there is data
@@ -232,5 +267,11 @@ def CallCreateDialog():
 
 btn_add_book.config(command=CallCreateDialog)
 
-# Place this portion at the end of the program
+
+
+
+
+
+
+# ----- Place this portion at the end of the program ----- #
 window.mainloop()

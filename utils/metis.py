@@ -1,7 +1,8 @@
 import random
 
 class MetisClass:
-    """Provides an interface for handling the reading lists"""
+    """Provides an interface for handling the reading lists and core functionalities"""
+
     def __init__(self, collection=list()):
         self.collection = collection[:]
         self.indices = { item.format_book() : index for index, item in enumerate(collection)}
@@ -40,7 +41,7 @@ class MetisClass:
         return new_item
 
 class ReadingListItem:
-    """Describes a book a to read"""
+    """Describes a book to read"""
 
     def __init__(self, read=False, **kwargs):
         self.title = kwargs.pop('title')

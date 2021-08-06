@@ -34,6 +34,8 @@ class ListEntry:
         self.label.config(background=self.frame['bg'])
 
 class EntriesListHandler:
+    """Handles the interaction between the GUI list and the actual data list"""
+
     def __init__(self, window, Metis, master, binding, reloader):
         self.item_list = dict()
         self.frame_list = dict()
@@ -53,7 +55,7 @@ class EntriesListHandler:
         self.item_list = dict()
         self.frame_list = dict()
 
-        # Some GUI sht
+        # Some GUI techninal sht
         frm_temp = tk.Frame(self.master)
         frm_temp.pack()
         self.window.update()

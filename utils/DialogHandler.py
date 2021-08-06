@@ -31,12 +31,16 @@ class DialogHandler:
             
     @staticmethod
     def decode_collection(dct):
+        "A custom decoder for decoding Reading List specific data"
+
         if '__ReadingListItem__' in dct:
             return  ReadingListItem(**{key : value for key, value in dct.items() if key != '__ReadingListItem__'})
         else:
             return dct
 
     class CollectionEncoder(json.JSONEncoder):
+        "Extends the JSONEncoder to include encoding Reading Lists"
+
         def default(self, dct):
             if isinstance(dct, ReadingListItem):
                 res = { '__ReadingListItem__' : True }
@@ -66,10 +70,12 @@ class DialogHandler:
                 print(e)
                 return None
         
+        # Create a Reading List Collection (list)
         try:
             current_collection = collection[:]
         except TypeError:
             current_collection = collection['collection']
+            
         self.Metis.reload(current_collection)
         self.Secretary.reload()
 
