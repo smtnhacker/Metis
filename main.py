@@ -16,8 +16,7 @@ window.rowconfigure(1, minsize=300, weight=1)
 window.columnconfigure(0, minsize=500, weight=1)
 
 # ------ Initialize Metis ----- #
-current_collection = []
-Metis = MetisClass(current_collection)
+Metis = MetisClass()
 
 # ----- Set-up the Request GUI ----- #
 frm_main = tk.Frame(window)
@@ -151,9 +150,7 @@ class DialogHandler:
 
 
     def cmd_new_list(self, Secretary):
-        global current_collection, Metis
-        current_collection = []
-        Metis = MetisClass(current_collection)
+        Metis.reload()
         Secretary.reload()
 
     def cmd_load_list(self, Secretary):
@@ -171,12 +168,11 @@ class DialogHandler:
                 print(e.message)
                 return None
         
-        global current_collection, Metis
         try:
             current_collection = collection[:]
         except TypeError:
             current_collection = collection['collection']
-        Metis = MetisClass(current_collection)
+        Metis.reload(current_collection)
         Secretary.reload()
 
     def cmd_save_list(self):
@@ -187,7 +183,7 @@ class DialogHandler:
         if not filepath:
             return
         with open(filepath, 'w') as output_file:
-            json.dump(current_collection, output_file, indent=4, cls=self.CollectionEncoder)
+            json.dump(Metis.collection, output_file, indent=4, cls=self.CollectionEncoder)
 
 btn_new_list = tk.Button(master=frm_main, text="New List", width=25)
 btn_new_list.grid(row=1, column=0, padx=10, pady=5)
