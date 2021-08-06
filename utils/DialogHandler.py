@@ -50,11 +50,20 @@ class DialogHandler:
             else:
                 return super().default(dct)
 
+    def ask_confirmation(func):
+        def wrapper(self):
+            proceed = messagebox.askyesno(message='Unsaved progress will be lost. Do you want to continue?', icon='warning', title='New List')
+            if not proceed:
+                return
+            func(self)
+        return wrapper
 
+    @ask_confirmation
     def cmd_new_list(self):
         self.Metis.reload()
         self.Secretary.reload()
 
+    @ask_confirmation
     def cmd_load_list(self):
         filepath = askopenfilename(
             filetypes=[('JSON Files', '*.json'), ('All Files', '*.*')]
@@ -75,7 +84,7 @@ class DialogHandler:
             current_collection = collection[:]
         except TypeError:
             current_collection = collection['collection']
-            
+
         self.Metis.reload(current_collection)
         self.Secretary.reload()
 
