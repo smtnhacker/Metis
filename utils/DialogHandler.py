@@ -1,3 +1,4 @@
+import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename, asksaveasfilename
@@ -97,3 +98,92 @@ class DialogHandler:
             return
         with open(filepath, 'w') as output_file:
             json.dump(self.Metis.collection, output_file, indent=4, cls=self.CollectionEncoder)
+
+class AddDialog:
+    """Provides an interface for handling the modal in creating a new book item."""
+
+    def __init__(self, root : tk.Tk):
+        self.data = None
+
+        modal = tk.Toplevel(root)
+        modal.title('Add a new book')
+        modal.minsize(500, 330)
+        modal.resizable(False, False)
+
+        modal.protocol("WM_DELETE_WINDOW", lambda : self.dismiss(modal))
+        modal.transient(root)
+        modal.wait_visibility()
+        modal.grab_set()
+
+        # --- Set-up the modal --- #
+        frm_entries = tk.Frame(modal)
+        frm_entries.pack(padx=20, pady=10)
+
+        lbl_title = tk.Label(master=frm_entries, text='Title: ')
+        lbl_title.grid(row=0, column=0)
+        ent_title = tk.Entry(master=frm_entries)
+        ent_title.grid(row=0, column=1, sticky='ew')
+        ent_title.focus()
+
+        lbl_subtitle = tk.Label(master=frm_entries, text='Subtitle: ')
+        lbl_subtitle.grid(row=1, column=0)
+        ent_subtitle = tk.Entry(master=frm_entries)
+        ent_subtitle.grid(row=1, column=1, sticky='ew')
+
+        lbl_author = tk.Label(master=frm_entries, text='Author')
+        lbl_author.grid(row=2, column=0)
+        ent_author = tk.Entry(master=frm_entries)
+        ent_author.grid(row=2, column=1, sticky='ew')
+
+        lbl_date = tk.Label(master=frm_entries, text='Date: ')
+        lbl_date.grid(row=3, column=0)
+        ent_date = tk.Entry(master=frm_entries)
+        ent_date.grid(row=3, column=1, sticky='ew')
+
+        lbl_summary = tk.Label(master=frm_entries, text='Summary: ')
+        lbl_summary.grid(row=4, column=0)
+        txt_summary = tk.Text(master=frm_entries, width=40, height=7)
+        txt_summary.grid(row=4, column=1)
+        
+        frm_btn = tk.Frame(modal)
+        frm_btn.pack(padx=20, pady=5)
+
+        def pre_submit():
+            "Pre-checks the information inputted before packing them in a dictionary for processing."
+
+            # Check if there is a title
+            title = ent_title.get()
+            if not title:
+                messagebox.showerror(message='You must have a title!')
+                return
+            
+            subtitle = ent_subtitle.get()
+            author = ent_author.get()
+            date = ent_date.get()
+            summary = txt_summary.get("1.0", tk.END)
+
+            data = {
+                'title': title,
+                'subtitle': subtitle,
+                'author': author if author else 'Anonymous',
+                'date': date if date else 'n.d.',
+                'summary': summary,
+            }
+
+            self.submit(modal, data)
+        
+        btn_submit = tk.Button(master=frm_btn, text='Submit', command=pre_submit)
+        btn_submit.grid(row=0, column=0, padx=10)
+
+        btn_cancel = tk.Button(master=frm_btn, text='Cancel', command=lambda : self.dismiss(modal))
+        btn_cancel.grid(row=0, column=1, padx=10)
+
+        modal.wait_window()
+    
+    def dismiss(self, modal):
+        modal.grab_release()
+        modal.destroy()
+    
+    def submit(self, modal, data : dict):
+        self.data = data
+        self.dismiss(modal)
