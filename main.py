@@ -63,7 +63,7 @@ class App:
         self.scrollbar.grid_remove()
 
         # Configure the canvas
-        self.SCROLLABLE = False
+        self.scrollable = False
        
         def onCanvasConfigure(event):
             self.canvas_list.configure(scrollregion = self.canvas_list.bbox('all'))
@@ -78,7 +78,7 @@ class App:
         # Make it scrollable using the mousewheel
 
         def on_mouse_wheel(event):
-            if self.SCROLLABLE:
+            if self.scrollable:
                 self.canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
 
         def recursive_binding(w):
@@ -174,10 +174,10 @@ class App:
 
         if self.canvas_list.winfo_height() >= minHeight:
             self.scrollbar.grid_remove()
-            self.SCROLLABLE = False
+            self.scrollable = False
         else:
             self.scrollbar.grid(row=0, column=1, sticky='nsew')
-            self.SCROLLABLE = True
+            self.scrollable = True
 
     def reload_canvas(self):
         "Re-calibrates the canvas to update the scrollbar"
