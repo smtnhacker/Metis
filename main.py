@@ -132,10 +132,6 @@ class App:
                     load_list_btn=self.btn_load_list
                 )
 
-        # ----- Place this portion at the end of the program ----- #
-        
-        self.window.mainloop()
-    
     # -------------------------------------------------- #
     # --------------- WIDGET METHODS ------------------- #
     # -------------------------------------------------- #
@@ -191,6 +187,9 @@ class App:
         self.canvas_list.config(yscrollcommand=self.scrollbar.set)
         self.check_scrollbar_visibility()
 
+    def startApp(self):
+        self.window.mainloop()
 
 if __name__ == '__main__':
     app = App()
+    app.startApp()
