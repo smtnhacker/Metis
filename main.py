@@ -245,6 +245,7 @@ class App:
     
     def load_file_path(self):
         "Configures the App and loads the filepath"
+
         if self.filepath:
             with open(self.filepath, 'r') as data_file:
                 data = data_file.read()
@@ -255,7 +256,7 @@ class App:
                     print(e)
                     return None
                 else:
-                    self.window.title(f'Metis - {self.filepath}')
+                    self.window.title(f'{App.TITLE} - {self.filepath}')
                     try:
                         current_collection = collection[:]
                     except TypeError:
