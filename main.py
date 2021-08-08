@@ -116,7 +116,8 @@ class App:
 
         self.Secretary = EntriesListHandler(
                         window=self.window, 
-                        Metis=self.Metis, 
+                        collection=self.Metis.collection,
+                        toggler=self.Metis.toggle, 
                         master=self.frm_container, 
                         binding=recursive_binding, 
                         reloader=self.reload_canvas

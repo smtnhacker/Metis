@@ -4,12 +4,15 @@ class MetisClass:
     """Provides an interface for handling the reading lists and core functionalities"""
 
     def __init__(self, collection=list()):
-        self.collection = collection[:]
+        self.collection = []
+        self.reload(collection)
+
+    def reload(self, collection=list()):
+        while self.collection:
+            self.collection.pop(-1)
+        self.collection.extend(collection)
         self.indices = { item.format_book() : index for index, item in enumerate(collection)}
         self.availables = set(filter(lambda x : x.available, self.collection))
-    
-    def reload(self, collection=list()):
-        self.__init__(collection)
     
     def request_book(self):
         "Returns a book from the available collection"

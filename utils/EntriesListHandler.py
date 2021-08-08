@@ -6,18 +6,18 @@ class ListEntry:
     COLOR_AVAILABLE = "#e4ffbd"
     COLOR_UNAVAILABLE = "#ffbdbd"
 
-    def __init__(self, window, Metis, master, frame, item):
+    def __init__(self, window, toggler, master, frame, item):
         self.frame = frame
         self.item = item
         self.available = item.available
-        self.Metis = Metis
+        self.toggler = toggler
         self.window = window
         self.master = master
     
         # --- Create the GUI --- #
 
         def on_click(event):
-            self.Metis.toggle(self.item)
+            self.toggler(self.item)
             self.toggle()
 
         self.frame.config(height=25, bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
@@ -36,17 +36,18 @@ class ListEntry:
 class EntriesListHandler:
     """Handles the interaction between the GUI list and the actual data list"""
 
-    def __init__(self, window, Metis, master, binding, reloader):
+    def __init__(self, window, master, collection, toggler, binding, reloader):
         self.item_list = dict()
         self.frame_list = dict()
         self.window = window
-        self.Metis = Metis
+        self.collection = collection
+        self.toggler = toggler
         self.master = master
         self.recursive_binding = binding
         self.reload_canvas = reloader
 
     def load(self):
-        for item in self.Metis.collection:
+        for item in self.collection:
             self.insert(item)
     
     def unload(self):
@@ -70,7 +71,13 @@ class EntriesListHandler:
     
     def insert(self, item):
         self.frame_list[item.format_book()] = tk.Frame(self.master)
-        self.item_list[item.format_book()] = ListEntry(self.window, self.Metis, self.master, self.frame_list[item.format_book()], item)
+        self.item_list[item.format_book()] = ListEntry(
+            window=self.window, 
+            toggler=self.toggler, 
+            master=self.master, 
+            frame=self.frame_list[item.format_book()], 
+            item=item
+        )
 
         self.window.update()
 
