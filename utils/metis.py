@@ -1,10 +1,11 @@
 import random
+import json
 
 class MetisClass:
     """Provides an interface for handling the reading lists and core functionalities"""
 
     def __init__(self, collection=list()):
-        self.collection = []
+        self.collection = collection
         self.reload(collection)
 
     def reload(self, collection=list()):
@@ -65,3 +66,28 @@ class ReadingListItem:
     
     def format_book(self):
         return f'{self.title} ({self.date}) by {self.author}'
+
+    # ------------------------------------------ #
+    # --------- For JSON Conversion ------------ #
+    # ------------------------------------------ #
+        
+    @staticmethod
+    def decode_collection(dct):
+        "A custom decoder for decoding Reading List specific data"
+
+        if '__ReadingListItem__' in dct:
+            return  ReadingListItem(**{key : value for key, value in dct.items() if key != '__ReadingListItem__'})
+        else:
+            return dct
+
+    class CollectionEncoder(json.JSONEncoder):
+        "Extends the JSONEncoder to include encoding Reading Lists"
+
+        def default(self, dct):
+            if isinstance(dct, ReadingListItem):
+                res = { '__ReadingListItem__' : True }
+                for key, value in dct.__dict__.items():
+                    res[key] = value
+                return res
+            else:
+                return super().default(dct)

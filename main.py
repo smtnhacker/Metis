@@ -115,23 +115,43 @@ class App:
         # ----- Set-up the Reading List Backend ----- #
 
         self.Secretary = EntriesListHandler(
-                        window=self.window, 
-                        collection=self.Metis.collection,
-                        toggler=self.Metis.toggle, 
-                        master=self.frm_container, 
-                        binding=recursive_binding, 
-                        reloader=self.reload_canvas
-                    )
+            window=self.window,
+            toggler=self.Metis.toggle, 
+            master=self.frm_container, 
+            binding=recursive_binding, 
+            reloader=self.reload_canvas,
+            collection=self.Metis.collection,
+        )
 
-        # ----- Set up the File Handling Dialog Boxes ----- #
+        # ----- Set up File Handling ----- #
 
         self.Dialogs = DialogHandler(
-                    self.Metis, 
-                    self.Secretary, 
-                    new_list_btn=self.btn_new_list, 
-                    save_list_btn=self.btn_save_list, 
-                    load_list_btn=self.btn_load_list
-                )
+            encoder_class=ReadingListItem.CollectionEncoder,
+            decoder_function=ReadingListItem.decode_collection
+        )
+
+        @DialogHandler.ask_confirmation
+        def cmd_new_list():
+            self.Metis.reload()
+            self.Secretary.reload()
+
+        self.btn_new_list.config(command=cmd_new_list)
+
+        def cmd_save_list():
+            self.filepath = self.Dialogs.cmd_save_list(self.Metis.collection)
+
+        self.btn_save_list.config(command=cmd_save_list)
+
+        def cmd_load_list():
+            res = self.Dialogs.cmd_load_list()
+
+            self.filepath = res['filepath']
+            collection = res['collection']
+
+            self.Metis.reload(collection)
+            self.Secretary.reload()
+
+        self.btn_load_list.config(command=cmd_load_list)
 
     # -------------------------------------------------- #
     # --------------- WIDGET METHODS ------------------- #
