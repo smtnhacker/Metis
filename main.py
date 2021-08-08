@@ -3,6 +3,8 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 
+import configparser
+
 from utils.metis import MetisClass, ReadingListItem
 from utils.EntriesListHandler import *
 from utils.DialogHandler import *
@@ -10,12 +12,17 @@ from utils.DialogHandler import *
 class App:
     """A class that handles the overall operation of the Metis program."""
 
+    TITLE = 'Metis'
+    CONFIG_PATH = 'config.ini'
+
     def __init__(self):
+
+        self.filepath = ''
 
         # ----- Initialize the Window ----- #
 
         self.window = tk.Tk()
-        self.window.title('Metis')
+        self.window.title(App.TITLE)
         self.window.minsize(width=920, height=400)
         self.window.rowconfigure(0, minsize=100, weight=0)
         self.window.rowconfigure(1, minsize=300, weight=1)
@@ -134,6 +141,10 @@ class App:
         self.btn_save_list.config(command=self.cmd_save_list)
         self.btn_load_list.config(command=self.cmd_load_list)
 
+        # ----- Load the config file ----- #
+
+        self.loadApp()
+
     # -------------------------------------------------- #
     # --------------- WIDGET METHODS ------------------- #
     # -------------------------------------------------- #
@@ -167,21 +178,27 @@ class App:
     
     @DialogHandler.ask_confirmation
     def cmd_new_list(self):
+
+        self.filepath = ''
+        self.window.title(App.TITLE)
+
         self.Metis.reload()
         self.Secretary.reload()
+        self.reload_config_path()
     
     def cmd_save_list(self):
         self.filepath = self.Dialogs.cmd_save_list(self.Metis.collection)
+        self.reload_config_path()
 
     def cmd_load_list(self):
         res = self.Dialogs.cmd_load_list()
 
+        if not res:
+            return
+
         self.filepath = res['filepath']
-        collection = res['collection']
-
-        self.Metis.reload(collection)
-        self.Secretary.reload()
-
+        self.load_file_path()
+        self.reload_config_path()
 
     # ------------------------------------------- #
     # ---------- GUI HANDLER METHODS ------------ #
@@ -206,7 +223,58 @@ class App:
         self.canvas_list.configure(scrollregion=self.canvas_list.bbox('all'))
         self.canvas_list.config(yscrollcommand=self.scrollbar.set)
         self.check_scrollbar_visibility()
+        
+    def loadApp(self):
+        "Sets up the windows and the App configurations."
 
+        # Load the config file
+        try:
+            config = configparser.ConfigParser()
+            config.read(App.CONFIG_PATH)
+            self.filepath = config['recent_file']['path']
+        except:
+            config = configparser.ConfigParser()
+            config['recent_file'] = { 'path' : '' }
+            with open('config.ini', 'w') as config_file:
+                config.write(config_file)
+            print('Successfully created config file!')
+        else:
+            print(f'Successfully loaded config file!\nFile Path: {self.filepath}')
+        
+        self.load_file_path()
+    
+    def load_file_path(self):
+        "Configures the App and loads the filepath"
+        if self.filepath:
+            with open(self.filepath, 'r') as data_file:
+                data = data_file.read()
+                try:
+                    collection = json.loads(data, object_hook=self.Dialogs.decoder)
+                except ValueError as e:
+                    messagebox.showerror(title='Error', message='Invalid config file! The recent_file path cannot be read.')
+                    print(e)
+                    return None
+                else:
+                    self.window.title(f'Metis - {self.filepath}')
+                    try:
+                        current_collection = collection[:]
+                    except TypeError:
+                        current_collection = collection['collection']
+                    self.Metis.reload(current_collection)
+                    self.Secretary.reload()
+
+        else:
+            self.window.title(App.TITLE)
+            self.Metis.reload()
+            self.Secretary.reload()
+    
+    def reload_config_path(self):
+        config = configparser.ConfigParser()
+        config.read(App.CONFIG_PATH)
+        config['recent_file']['path'] = self.filepath
+        with open(App.CONFIG_PATH, 'w') as config_file:
+            config.write(config_file)
+    
     def startApp(self):
         self.window.mainloop()
 
