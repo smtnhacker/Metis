@@ -235,7 +235,7 @@ class App:
         except:
             config = configparser.ConfigParser()
             config['recent_file'] = { 'path' : '' }
-            with open('config.ini', 'w') as config_file:
+            with open(App.CONFIG_PATH, 'w') as config_file:
                 config.write(config_file)
             print('Successfully created config file!')
         else:
