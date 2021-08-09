@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 
+import json
 import configparser
 
 from utils.metis import MetisClass, ReadingListItem
@@ -23,7 +24,7 @@ class App:
 
         self.window = tk.Tk()
         self.window.title(App.TITLE)
-        self.window.minsize(width=920, height=400)
+        self.window.minsize(width=960, height=400)
         self.window.rowconfigure(0, minsize=100, weight=0)
         self.window.rowconfigure(1, minsize=300, weight=1)
         self.window.columnconfigure(0, minsize=500, weight=1)
@@ -43,15 +44,15 @@ class App:
 
         self.btn_request_book = tk.Button(
             master=self.frm_main,
-            text="Click to request for a book",
-            width=25,
+            text="Click to request",
+            width=20,
             command=self.request_book
         )
         self.btn_request_book.grid(row=0, column=0, padx=10, pady=10)
 
         self.ent_book_given = tk.Entry(master=self.frm_main,)
         self.ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
-        self.ent_book_given.grid(row=0, column=1, columnspan=3, padx=10, pady=10, sticky='ew')
+        self.ent_book_given.grid(row=0, column=1, columnspan=4, padx=10, pady=10, sticky='ew')
 
         # ----- Create a Scrollable Canvas ----- #
 
@@ -100,19 +101,22 @@ class App:
 
         # ----- Create the File Handling Buttons ----- #
 
-        self.btn_new_list = tk.Button(master=self.frm_main, text="New List", width=25)
+        self.btn_new_list = tk.Button(master=self.frm_main, text="New List", width=20)
         self.btn_new_list.grid(row=1, column=0, padx=10, pady=5)
 
-        self.btn_load_list = tk.Button(master=self.frm_main, text="Load List", width=25)
+        self.btn_load_list = tk.Button(master=self.frm_main, text="Load List", width=20)
         self.btn_load_list.grid(row=1, column=1, padx=10, pady=5)
 
-        self.btn_save_list = tk.Button(master=self.frm_main, text="Save List", width=25)
+        self.btn_save_list = tk.Button(master=self.frm_main, text="Save List", width=20)
         self.btn_save_list.grid(row=1, column=2, padx=10, pady=5)
+
+        self.btn_save_as_list = tk.Button(master=self.frm_main, text="Save As", width=20)
+        self.btn_save_as_list.grid(row=1, column=3, padx=10, pady=5)
 
         # ----- Create the Add Book Buttons ----- #
 
-        self.btn_add_book = tk.Button(master=self.frm_main, text="Add Book", width=25)
-        self.btn_add_book.grid(row=1, column=3, padx=10, pady=5)
+        self.btn_add_book = tk.Button(master=self.frm_main, text="Add Book", width=20)
+        self.btn_add_book.grid(row=1, column=4, padx=10, pady=5)
         self.btn_add_book.config(command=self.CallCreateDialog)
 
         # --------------------------------------------------- #
@@ -140,6 +144,7 @@ class App:
         self.btn_new_list.config(command=self.cmd_new_list)
         self.btn_save_list.config(command=self.cmd_save_list)
         self.btn_load_list.config(command=self.cmd_load_list)
+        self.btn_save_as_list.config(command=self.cmd_save_as_list)
 
         # ----- Load the config file ----- #
 
@@ -185,9 +190,23 @@ class App:
         self.Metis.reload()
         self.Secretary.reload()
         self.reload_config_path()
-    
+
     def cmd_save_list(self):
-        self.filepath = self.Dialogs.cmd_save_list(self.Metis.collection)
+        if not self.filepath:
+            self.cmd_save_as_list()
+        else:
+            data = self.Metis.collection
+            with open(self.filepath, 'w') as output_file:
+                json.dump(data, output_file, indent=4, cls=self.Dialogs.encoder)
+    
+    def cmd_save_as_list(self):
+        res = self.Dialogs.cmd_save_list(self.Metis.collection)
+
+        if not res:
+            return
+
+        self.filepath = res
+        self.window.title(f'{App.TITLE} - {self.filepath}')
         self.reload_config_path()
 
     def cmd_load_list(self):
@@ -241,7 +260,12 @@ class App:
         else:
             print(f'Successfully loaded config file!\nFile Path: {self.filepath}')
         
-        self.load_file_path()
+        if not self.load_file_path():
+            config = configparser.ConfigParser()
+            config['recent_file'] = { 'path' : '' }
+            with open(App.CONFIG_PATH, 'w') as config_file:
+                config.write(config_file)
+            print('Deleted recent file from config')
     
     def load_file_path(self):
         "Configures the App and loads the filepath"
@@ -254,7 +278,7 @@ class App:
                 except ValueError as e:
                     messagebox.showerror(title='Error', message='Invalid config file! The recent_file path cannot be read.')
                     print(e)
-                    return None
+                    return False
                 else:
                     self.window.title(f'{App.TITLE} - {self.filepath}')
                     try:
@@ -263,11 +287,13 @@ class App:
                         current_collection = collection['collection']
                     self.Metis.reload(current_collection)
                     self.Secretary.reload()
+                    return True
 
         else:
             self.window.title(App.TITLE)
             self.Metis.reload()
             self.Secretary.reload()
+            return True
     
     def reload_config_path(self):
         config = configparser.ConfigParser()
