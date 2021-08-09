@@ -7,13 +7,17 @@ class MetisClass:
     def __init__(self, collection=list()):
         self.collection = collection
         self.reload(collection)
+        self.next_uid = 0
 
     def reload(self, collection=list()):
         while self.collection:
             self.collection.pop(-1)
-        self.collection.extend(collection)
+        self.collection.extend(collection) 
         self.indices = { item.format_book() : index for index, item in enumerate(collection)}
         self.availables = set(filter(lambda x : x.available, self.collection))
+
+        if collection:
+            self.next_uid = max(x.get_uid() for x in self.collection) + 1
     
     def request_book(self):
         "Returns a book from the available collection"
@@ -35,7 +39,7 @@ class MetisClass:
             self.availables.remove(item)
     
     def insert_item(self, data):
-        new_item = ReadingListItem(**data)
+        new_item = ReadingListItem(uid=self.get_next_uid(), **data)
         if new_item.format_book() in self.indices.keys():
             return None
         self.collection.append(new_item)
@@ -43,11 +47,28 @@ class MetisClass:
         self.indices[new_item.format_book()] = len(self.collection) - 1
         print(f'Successfully added {new_item.format_book()}.')
         return new_item
+    
+    def edit_item(self, item, new_data):
+        new_item = ReadingListItem(uid=item.get_uid(), **new_data)
+        
+        if not item.format_book() == new_item.format_book() and new_item.format_book() in self.indices.keys():
+            return False
+        
+        index = self.indices[item.format_book()]
+        del self.indices[item.format_book()]
+        self.indices[new_item.format_book()] = index
+        item.config(**new_data)
+        return True
+    
+    def get_next_uid(self):
+        res = self.next_uid
+        self.next_uid += 1
+        return res
 
 class ReadingListItem:
     """Describes a book to read"""
 
-    def __init__(self, read=False, **kwargs):
+    def __init__(self, uid : int, read=False, **kwargs):
         self.title = kwargs.pop('title')
         self.subtitle = kwargs.get('subtitle')
         self.author = kwargs.get('author', 'Anonymous')
@@ -56,6 +77,7 @@ class ReadingListItem:
         self.genre = kwargs.get('genre')
 
         self.available = kwargs.get('available', True)
+        self.uid = uid
     
     def config(self, **kwargs):
         for attrib, value in kwargs.items():
@@ -66,6 +88,9 @@ class ReadingListItem:
     
     def format_book(self):
         return f'{self.title} ({self.date}) by {self.author}'
+    
+    def get_uid(self):
+        return self.uid
 
     # ------------------------------------------ #
     # --------- For JSON Conversion ------------ #

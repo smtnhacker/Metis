@@ -132,6 +132,7 @@ class App:
             binding=recursive_binding, 
             reloader=self.reload_canvas,
             collection=self.Metis.collection,
+            edit_reloader=self.Metis.edit_item,
         )
 
         # ----- Set up File Handling ----- #
@@ -275,7 +276,7 @@ class App:
                 data = data_file.read()
                 try:
                     collection = json.loads(data, object_hook=self.Dialogs.decoder)
-                except ValueError as e:
+                except Exception as e:
                     messagebox.showerror(title='Error', message='Invalid config file! The recent_file path cannot be read.')
                     print(e)
                     return False
