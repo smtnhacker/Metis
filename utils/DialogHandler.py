@@ -115,14 +115,14 @@ class AddDialog:
             "Pre-checks the information inputted before packing them in a dictionary for processing."
 
             # Check if there is a title
-            title = ent_title.get()
+            title = ent_title.get().strip()
             if not title:
                 messagebox.showerror(message='You must have a title!')
                 return
             
-            subtitle = ent_subtitle.get()
-            author = ent_author.get()
-            date = ent_date.get()
+            subtitle = ent_subtitle.get().strip()
+            author = ent_author.get().strip()
+            date = ent_date.get().strip()
             summary = txt_summary.get("1.0", tk.END)
 
             data = {
