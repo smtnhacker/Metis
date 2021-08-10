@@ -25,9 +25,9 @@ class MetisClass:
         if self.availables:
             chosen = random.choice(list(self.availables))
             self.toggle(chosen)
-            return chosen.format_book()
+            return chosen
         else:
-            return 'No book available'
+            return None
     
     def toggle(self, item):
         index = self.indices[item.format_book()]
@@ -57,6 +57,8 @@ class MetisClass:
         index = self.indices[item.format_book()]
         del self.indices[item.format_book()]
         self.indices[new_item.format_book()] = index
+        if new_data['available'] != item.available:
+            self.toggle(item)
         item.config(**new_data)
         return True
     

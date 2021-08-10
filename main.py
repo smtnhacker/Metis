@@ -158,13 +158,14 @@ class App:
     def request_book(self):
         "Requests a title (string) from Metis"
 
-        requested_title = self.Metis.request_book()
+        requested_item = self.Metis.request_book()
+        requested_title = requested_item.format_book() if requested_item else 'No book available'
         self.ent_book_given.delete(0, tk.END)
         self.ent_book_given.insert(0, requested_title)
 
         # Show in the GUI that the chosen book is not unavailable
         if requested_title != 'No book available':
-            self.Secretary.toggle(requested_title)
+            self.Secretary.toggle(requested_item.get_uid())
     
     def CallCreateDialog(self):
         "Creates a dialog box for adding a new book entry"

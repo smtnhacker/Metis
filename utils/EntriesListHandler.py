@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 
 class ListEntry:
@@ -28,6 +29,8 @@ class ListEntry:
                 messagebox.showerror(message='Book entry already exists')
             else:
                 self.label.config(text=self.item.format_book())
+                if self.available != self.item.available:
+                    self.toggle()
 
         self.frame.config(height=25, bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
         self.frame.bind("<Button-1>", on_click)
@@ -150,32 +153,8 @@ class AddDialog:
         
         self.frm_btn = tk.Frame(self.modal)
         self.frm_btn.pack(padx=20, pady=5)
-
-        def pre_submit():
-            "Pre-checks the information inputted before packing them in a dictionary for processing."
-
-            # Check if there is a title
-            title = self.ent_title.get().strip()
-            if not title:
-                messagebox.showerror(message='You must have a title!')
-                return
-            
-            subtitle = self.ent_subtitle.get().strip()
-            author = self.ent_author.get().strip()
-            date = self.ent_date.get().strip()
-            summary = self.txt_summary.get("1.0", tk.END)
-
-            data = {
-                'title': title,
-                'subtitle': subtitle,
-                'author': author if author else 'Anonymous',
-                'date': date if date else 'n.d.',
-                'summary': summary,
-            }
-
-            self.submit(data)
         
-        self.btn_submit = tk.Button(master=self.frm_btn, text='Submit', command=pre_submit)
+        self.btn_submit = tk.Button(master=self.frm_btn, text='Submit', command=self.pre_submit)
         self.btn_submit.grid(row=0, column=0, padx=10)
 
         self.btn_cancel = tk.Button(master=self.frm_btn, text='Cancel', command=self.dismiss)
@@ -183,6 +162,30 @@ class AddDialog:
 
         if should_wait:
             self.modal.wait_window()
+    
+    def pre_submit(self):
+        "Pre-checks the information inputted before packing them in a dictionary for processing."
+
+        # Check if there is a title
+        title = self.ent_title.get().strip()
+        if not title:
+            messagebox.showerror(message='You must have a title!')
+            return
+        
+        subtitle = self.ent_subtitle.get().strip()
+        author = self.ent_author.get().strip()
+        date = self.ent_date.get().strip()
+        summary = self.txt_summary.get("1.0", tk.END)
+
+        data = {
+            'title': title,
+            'subtitle': subtitle,
+            'author': author if author else 'Anonymous',
+            'date': date if date else 'n.d.',
+            'summary': summary,
+        }
+
+        self.submit(data)
     
     def dismiss(self):
         self.modal.grab_release()
@@ -208,12 +211,44 @@ class EditDialog(AddDialog):
         self.ent_date.insert(0, self.item.date)
         self.txt_summary.insert('1.0', self.item.summary)
 
+        # Add the Availability
+        self.available = tk.BooleanVar(value=self.item.available)
+        self.chk_available = ttk.Checkbutton(self.frm_entries, text='Available', variable=self.available)
+        self.chk_available.grid(row=5, column=1, sticky='e')
+
         self.data = {
             'title': self.item.title,
             'subtitle': self.item.subtitle,
             'author': self.item.author,
             'date': self.item.date,
             'summary': self.item.summary,
+            'available': self.item.available,
         }
 
         self.modal.wait_window()
+    
+    def pre_submit(self):
+        "Pre-checks the information inputted before packing them in a dictionary for processing."
+
+        # Check if there is a title
+        title = self.ent_title.get().strip()
+        if not title:
+            messagebox.showerror(message='You must have a title!')
+            return
+        
+        subtitle = self.ent_subtitle.get().strip()
+        author = self.ent_author.get().strip()
+        date = self.ent_date.get().strip()
+        summary = self.txt_summary.get("1.0", tk.END)
+
+        data = {
+            'title': title,
+            'subtitle': subtitle,
+            'author': author,
+            'date': date,
+            'summary': summary,
+            'available': self.available.get()
+        }
+
+        print(data)
+        self.submit(data)
