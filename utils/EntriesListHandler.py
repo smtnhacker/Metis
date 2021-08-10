@@ -209,7 +209,7 @@ class EditDialog(AddDialog):
         self.ent_subtitle.insert(0, self.item.subtitle)
         self.ent_author.insert(0, self.item.author)
         self.ent_date.insert(0, self.item.date)
-        self.txt_summary.insert('1.0', self.item.summary)
+        self.txt_summary.insert('1.0', self.item.summary[:-2])
 
         # Add the Availability
         self.available = tk.BooleanVar(value=self.item.available)
@@ -221,7 +221,7 @@ class EditDialog(AddDialog):
             'subtitle': self.item.subtitle,
             'author': self.item.author,
             'date': self.item.date,
-            'summary': self.item.summary,
+            'summary': self.item.summary[:-2],
             'available': self.item.available,
         }
 
@@ -250,5 +250,4 @@ class EditDialog(AddDialog):
             'available': self.available.get()
         }
 
-        print(data)
         self.submit(data)
