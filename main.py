@@ -131,8 +131,9 @@ class App:
             master=self.frm_container, 
             binding=recursive_binding, 
             reloader=self.reload_canvas,
-            collection=self.Metis.collection,
+            collection=self.Metis.collection.values(),
             edit_reloader=self.Metis.edit_item,
+            deleter=self.Metis.delete_item,
         )
 
         # ----- Set up File Handling ----- #
@@ -279,14 +280,15 @@ class App:
                     collection = json.loads(data, object_hook=self.Dialogs.decoder)
                 except Exception as e:
                     messagebox.showerror(title='Error', message='Invalid config file! The recent_file path cannot be read.')
+                    self.filepath = ''
                     print(e)
                     return False
                 else:
                     self.window.title(f'{App.TITLE} - {self.filepath}')
                     try:
-                        current_collection = collection[:]
-                    except TypeError:
-                        current_collection = collection['collection']
+                        current_collection = collection.copy()
+                    except Exception as e:
+                        print(e)
                     self.Metis.reload(current_collection)
                     self.Secretary.reload()
                     return True

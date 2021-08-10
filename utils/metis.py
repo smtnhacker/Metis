@@ -4,20 +4,19 @@ import json
 class MetisClass:
     """Provides an interface for handling the reading lists and core functionalities"""
 
-    def __init__(self, collection=list()):
-        self.collection = collection
+    def __init__(self, collection=dict()):
+        self.collection = dict()
         self.reload(collection)
         self.next_uid = 0
 
-    def reload(self, collection=list()):
-        while self.collection:
-            self.collection.pop(-1)
-        self.collection.extend(collection) 
-        self.indices = { item.format_book() : index for index, item in enumerate(collection)}
-        self.availables = set(filter(lambda x : x.available, self.collection))
+    def reload(self, collection=dict()):
+        self.collection.clear()
+        self.collection.update({ int(index) : value for index, value in collection.items() }) 
+        self.indices = { item.format_book() : item.get_uid() for item in self.collection.values() }
+        self.availables = set(filter(lambda x : x.available, self.collection.values()))
 
         if collection:
-            self.next_uid = max(x.get_uid() for x in self.collection) + 1
+            self.next_uid = max(x.get_uid() for x in self.collection.values()) + 1
     
     def request_book(self):
         "Returns a book from the available collection"
@@ -39,12 +38,13 @@ class MetisClass:
             self.availables.remove(item)
     
     def insert_item(self, data):
-        new_item = ReadingListItem(uid=self.get_next_uid(), **data)
+        uid = self.get_next_uid()
+        new_item = ReadingListItem(uid=uid, **data)
         if new_item.format_book() in self.indices.keys():
             return None
-        self.collection.append(new_item)
+        self.collection[uid] = new_item
         self.availables.add(new_item)
-        self.indices[new_item.format_book()] = len(self.collection) - 1
+        self.indices[new_item.format_book()] = uid
         print(f'Successfully added {new_item.format_book()}.')
         return new_item
     
@@ -61,6 +61,16 @@ class MetisClass:
             self.toggle(item)
         item.config(**new_data)
         return True
+    
+    def delete_item(self, item):
+        if item.format_book() not in self.indices.keys():
+            print(f'{item.format_book()} is missing. Cannot be deleted...')
+            return
+        index = self.indices[item.format_book()]
+        del self.collection[index] # So inefficient...
+        del self.indices[item.format_book()]
+        if item.available:
+            self.availables.remove(item)
     
     def get_next_uid(self):
         res = self.next_uid

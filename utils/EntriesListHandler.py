@@ -8,7 +8,7 @@ class ListEntry:
     COLOR_AVAILABLE = "#e4ffbd"
     COLOR_UNAVAILABLE = "#ffbdbd"
 
-    def __init__(self, window, toggler, master, frame, edit_reloader, item):
+    def __init__(self, window, toggler, master, frame, edit_reloader, gui_reload, item_delete, item):
         self.frame = frame
         self.item = item
         self.available = item.available
@@ -16,6 +16,8 @@ class ListEntry:
         self.window = window
         self.master = master
         self.edit_reloader = edit_reloader
+        self.gui_reload = gui_reload
+        self.item_delete = item_delete
     
         # --- Create the GUI --- #
 
@@ -25,6 +27,12 @@ class ListEntry:
             # self.toggle()
 
             modal = EditDialog(self.frame, self.item)
+
+            # Check if delete action should be performed
+            if modal.delete:
+                self.delete()
+                return
+
             if not self.edit_reloader(self.item, modal.data):
                 messagebox.showerror(message='Book entry already exists')
             else:
@@ -44,11 +52,16 @@ class ListEntry:
         self.available = not self.available
         self.frame.config(bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
         self.label.config(background=self.frame['bg'])
+    
+    def delete(self):
+        self.frame.destroy()
+        self.gui_reload()
+        self.item_delete(self.item)
 
 class EntriesListHandler:
     """Handles the interaction between the GUI list and the actual data list"""
 
-    def __init__(self, window, master, collection, toggler, binding, reloader, edit_reloader):
+    def __init__(self, window, master, collection, toggler, binding, reloader, edit_reloader, deleter):
         self.item_list = dict()
         self.frame_list = dict()
         self.window = window
@@ -58,6 +71,7 @@ class EntriesListHandler:
         self.recursive_binding = binding
         self.reload_canvas = reloader
         self.edit_reloader = edit_reloader
+        self.item_delete = deleter
 
     def load(self):
         for item in self.collection:
@@ -93,6 +107,8 @@ class EntriesListHandler:
             master=self.master, 
             frame=self.frame_list[item.get_uid()], 
             edit_reloader=self.edit_reloader, 
+            gui_reload=self.gui_reload, 
+            item_delete=self.item_delete, 
             item=item
         )
 
@@ -102,8 +118,8 @@ class EntriesListHandler:
         self.recursive_binding(self.frame_list[item.get_uid()])
         self.reload_canvas()
     
-    def toggle(self, item_name):
-        self.item_list[item_name].toggle()
+    def toggle(self, item_uid):
+        self.item_list[item_uid].toggle()
 
 class AddDialog:
     """Provides an interface for handling the modal in creating a new book item."""
@@ -215,6 +231,16 @@ class EditDialog(AddDialog):
         self.available = tk.BooleanVar(value=self.item.available)
         self.chk_available = ttk.Checkbutton(self.frm_entries, text='Available', variable=self.available)
         self.chk_available.grid(row=5, column=1, sticky='e')
+
+        # Add the Delete Btn
+        self.delete = False
+
+        def cmd_delete():
+            self.delete = True
+            self.dismiss()
+
+        self.btn_delete = tk.Button(master=self.frm_entries, text='Delete Entry', command=cmd_delete)
+        self.btn_delete.grid(row=5, column=0, padx=5, pady=5)
 
         self.data = {
             'title': self.item.title,

@@ -42,9 +42,9 @@ class DialogHandler:
         
         # Create a Reading List Collection (list)
         try:
-            current_collection = collection[:]
-        except TypeError:
-            current_collection = collection['collection']
+            current_collection = collection.copy()
+        except Exception as e:
+            print(e)
         
         res = {'filepath' : filepath, 'collection' : current_collection} 
         return res
