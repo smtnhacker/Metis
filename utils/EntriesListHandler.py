@@ -165,7 +165,13 @@ class AddDialog:
         self.lbl_summary = tk.Label(master=self.frm_entries, text='Summary: ')
         self.lbl_summary.grid(row=4, column=0)
         self.txt_summary = tk.Text(master=self.frm_entries, width=40, height=7)
-        self.txt_summary.grid(row=4, column=1)
+        self.txt_summary.grid(row=4, column=1, sticky='ew')
+
+        self.lbl_genres = tk.Label(master=self.frm_entries, text='Genres: ')
+        self.lbl_genres.grid(row=5, column=0)
+        self.frm_genres = tk.Frame(master=self.frm_entries, bg='red')
+        self.frm_genres.grid(row=5, column=1, pady=5, sticky='nsew')
+        self.genres = GenrePacker(master=self.frm_genres)
         
         self.frm_btn = tk.Frame(self.modal)
         self.frm_btn.pack(padx=20, pady=5)
@@ -230,7 +236,7 @@ class EditDialog(AddDialog):
         # Add the Availability
         self.available = tk.BooleanVar(value=self.item.available)
         self.chk_available = ttk.Checkbutton(self.frm_entries, text='Available', variable=self.available)
-        self.chk_available.grid(row=5, column=1, sticky='e')
+        self.chk_available.grid(row=6, column=1, sticky='e')
 
         # Add the Delete Btn
         self.delete = False
@@ -240,7 +246,7 @@ class EditDialog(AddDialog):
             self.dismiss()
 
         self.btn_delete = tk.Button(master=self.frm_entries, text='Delete Entry', command=cmd_delete)
-        self.btn_delete.grid(row=5, column=0, padx=5, pady=5)
+        self.btn_delete.grid(row=6, column=0, padx=5, pady=5)
 
         self.data = {
             'title': self.item.title,
@@ -277,3 +283,58 @@ class EditDialog(AddDialog):
         }
 
         self.submit(data)
+
+class GenreGUI:
+    def __init__(self, master, value):
+        self.master = master
+        self.value = value
+
+        self.frame = tk.Frame(master=master)
+        self.frame.pack()
+
+        self.label = tk.Label(master=self.frame, text=value)
+        self.label.pack()
+
+class GenrePacker:
+    def __init__(self, master):
+        self.master = master
+
+        self.frame = tk.Frame(master=master, width=200)
+        self.frame.pack(fill=tk.BOTH)
+
+        self.genres = list()
+        self.rows = list()
+        
+        self.genres = ['Horror', 'Mystery', 'Sci-Fi', 'Biography', 'History', 'Mathematics', 'Science', 'Chemistry', 'Psychology', 'Medicine']
+        self.reload()
+    
+    def add_genre(self, value):
+        # check if the genre already exists
+
+        # if it does not exist
+        self.genres.append(value)
+        self.reload()
+    
+    def reload(self):
+
+        for frm in self.rows:
+            frm.destroy()
+            self.frame.update()
+
+        self.rows = [tk.Frame(master=self.frame)]
+        self.rows[0].pack(fill=tk.X)
+
+        for value in self.genres:
+            while True:
+                frame = tk.Frame(master=self.rows[-1])
+                frame.pack(side=tk.LEFT)
+                genre = GenreGUI(master=frame, value=value)
+                self.frame.update()
+
+                if self.rows[-1].winfo_reqwidth() < self.frame.winfo_width() - 10 or len(self.rows[-1].winfo_children()) == 1:
+                    break
+
+                frame.destroy()
+                self.frame.update()
+                self.rows.append(tk.Frame(master=self.frame))
+                self.rows[-1].pack(fill=tk.X)
