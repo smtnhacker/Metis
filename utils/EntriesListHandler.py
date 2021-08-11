@@ -285,10 +285,11 @@ class EditDialog(AddDialog):
         self.submit(data)
 
 class GenreGUI:
-    def __init__(self, master, value):
+    def __init__(self, master, value, parent_delete):
         self.master = master
         self.value = value
         self.bg = '#e3eeff'
+        self.parent_delete = parent_delete
 
         self.frame = tk.Frame(master=master, bg=self.bg)
         self.frame.pack(padx=2, pady=2)
@@ -296,8 +297,11 @@ class GenreGUI:
         self.label = tk.Label(master=self.frame, text=value, bg=self.bg)
         self.label.pack(side=tk.LEFT, padx=4)
 
-        self.btn_delete = tk.Button(master=self.frame, text=' x ', font=('Helvetica', 4, 'bold'))
+        self.btn_delete = tk.Button(master=self.frame, text=' x ', font=('Helvetica', 4, 'bold'), command=self.delete)
         self.btn_delete.pack(side=tk.LEFT, padx=2, fill=tk.Y)
+    
+    def delete(self):
+        self.parent_delete(self)
 
 class GenrePacker:
     def __init__(self, master):
@@ -323,7 +327,7 @@ class GenrePacker:
         while True:
             frame = tk.Frame(master=self.rows[-1])
             frame.pack(side=tk.LEFT)
-            genre = GenreGUI(master=frame, value=value)
+            genre = GenreGUI(master=frame, value=value, parent_delete=self.delete_item)
             self.frame.update()
 
             if self.rows[-1].winfo_reqwidth() < self.frame.winfo_width() - 10 or len(self.rows[-1].winfo_children()) == 1:
@@ -353,6 +357,10 @@ class GenrePacker:
             self.frame.update()
             self.rows.append(tk.Frame(master=self.frame))
             self.rows[-1].pack(fill=tk.X)
+        
+    def delete_item(self, item):
+        item.master.destroy()
+        self.genres.remove(item.value)
 
     def reload(self):
 
