@@ -232,6 +232,7 @@ class EditDialog(AddDialog):
         self.ent_author.insert(0, self.item.author)
         self.ent_date.insert(0, self.item.date)
         self.txt_summary.insert('1.0', self.item.summary[:-2])
+        self.genres.load(item.genre if item.genre != None else set())
 
         # Add the Availability
         self.available = tk.BooleanVar(value=self.item.available)
@@ -255,6 +256,7 @@ class EditDialog(AddDialog):
             'date': self.item.date,
             'summary': self.item.summary[:-2],
             'available': self.item.available,
+            'genre': self.item.genre.copy() if self.item.genre != None else set()
         }
 
         self.modal.wait_window()
@@ -272,6 +274,7 @@ class EditDialog(AddDialog):
         author = self.ent_author.get().strip()
         date = self.ent_date.get().strip()
         summary = self.txt_summary.get("1.0", tk.END)
+        genres = self.genres.genres
 
         data = {
             'title': title,
@@ -279,7 +282,8 @@ class EditDialog(AddDialog):
             'author': author,
             'date': date,
             'summary': summary,
-            'available': self.available.get()
+            'available': self.available.get(),
+            'genre': genres
         }
 
         self.submit(data)
@@ -313,7 +317,11 @@ class GenrePacker:
         self.genres = list()
         self.rows = list()
         
-        self.genres = {'Horror', 'Mystery', 'Sci-Fi', 'Biography', 'History', 'Mathematics', 'Science', 'Chemistry', 'Psychology', 'Medicine'}
+        self.genres = {}
+        self.reload()
+    
+    def load(self, genres : set):
+        self.genres = genres
         self.reload()
     
     def add_genre(self, value):

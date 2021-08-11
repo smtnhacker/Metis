@@ -86,7 +86,7 @@ class ReadingListItem:
         self.author = kwargs.get('author', 'Anonymous')
         self.date = kwargs.get('date', 'n.d.')
         self.summary = kwargs.get('summary', 'TBA')
-        self.genre = kwargs.get('genre')
+        self.genre = kwargs.get('genre', {})
 
         self.available = kwargs.get('available', True)
         self.uid = uid
