@@ -288,12 +288,16 @@ class GenreGUI:
     def __init__(self, master, value):
         self.master = master
         self.value = value
+        self.bg = '#e3eeff'
 
-        self.frame = tk.Frame(master=master)
-        self.frame.pack()
+        self.frame = tk.Frame(master=master, bg=self.bg)
+        self.frame.pack(padx=2, pady=2)
 
-        self.label = tk.Label(master=self.frame, text=value)
-        self.label.pack()
+        self.label = tk.Label(master=self.frame, text=value, bg=self.bg)
+        self.label.pack(side=tk.LEFT, padx=4)
+
+        self.btn_delete = tk.Button(master=self.frame, text=' x ', font=('Helvetica', 4, 'bold'))
+        self.btn_delete.pack(side=tk.LEFT, padx=2, fill=tk.Y)
 
 class GenrePacker:
     def __init__(self, master):
@@ -305,16 +309,51 @@ class GenrePacker:
         self.genres = list()
         self.rows = list()
         
-        self.genres = ['Horror', 'Mystery', 'Sci-Fi', 'Biography', 'History', 'Mathematics', 'Science', 'Chemistry', 'Psychology', 'Medicine']
+        self.genres = {'Horror', 'Mystery', 'Sci-Fi', 'Biography', 'History', 'Mathematics', 'Science', 'Chemistry', 'Psychology', 'Medicine'}
         self.reload()
     
     def add_genre(self, value):
-        # check if the genre already exists
+        if value in self.genres:
+            messagebox.showerror(message='Genre already exists.')
+            return
+        self.genres.add(value)
+        self.insert_to_row(value)
 
-        # if it does not exist
-        self.genres.append(value)
-        self.reload()
+    def insert_to_row(self, value):
+        while True:
+            frame = tk.Frame(master=self.rows[-1])
+            frame.pack(side=tk.LEFT)
+            genre = GenreGUI(master=frame, value=value)
+            self.frame.update()
+
+            if self.rows[-1].winfo_reqwidth() < self.frame.winfo_width() - 10 or len(self.rows[-1].winfo_children()) == 1:
+                break
+
+            frame.destroy()
+            self.frame.update()
+            self.rows.append(tk.Frame(master=self.frame))
+            self.rows[-1].pack(fill=tk.X)
     
+    def insert_add_btn(self):
+
+        def btn_click(value):
+            self.add_genre(value)
+            btn_new_genre.destroy()
+            self.insert_add_btn()
+
+        while True:
+            btn_new_genre = GenrePacker.AddBtn(master=self.rows[-1], text='+', finished=btn_click)
+            btn_new_genre.pack(side=tk.LEFT)
+            self.frame.update()
+
+            if self.rows[-1].winfo_reqwidth() < self.frame.winfo_width() - 10 or len(self.rows[-1].winfo_children()) == 1:
+                break
+
+            btn_new_genre.destroy()
+            self.frame.update()
+            self.rows.append(tk.Frame(master=self.frame))
+            self.rows[-1].pack(fill=tk.X)
+
     def reload(self):
 
         for frm in self.rows:
@@ -325,16 +364,45 @@ class GenrePacker:
         self.rows[0].pack(fill=tk.X)
 
         for value in self.genres:
-            while True:
-                frame = tk.Frame(master=self.rows[-1])
-                frame.pack(side=tk.LEFT)
-                genre = GenreGUI(master=frame, value=value)
-                self.frame.update()
+            self.insert_to_row(value)
+        
+        self.insert_add_btn()
+    
+    class AddBtn(tk.Button):
+        def __init__(self, master, text, finished):
+            super().__init__(master=master, text=text)
+            self.data = ''
+            self.finished = finished
 
-                if self.rows[-1].winfo_reqwidth() < self.frame.winfo_width() - 10 or len(self.rows[-1].winfo_children()) == 1:
-                    break
+            self.config(command=self.call_dialog)
+        
+        def call_dialog(self):
+            self.modal = tk.Toplevel(self)
+            self.modal.title('New Genre')
+            self.modal.minsize(530, 40)
+            self.modal.resizable(True, False)
 
-                frame.destroy()
-                self.frame.update()
-                self.rows.append(tk.Frame(master=self.frame))
-                self.rows[-1].pack(fill=tk.X)
+            self.modal.protocol("WM_DELETE_WINDOW", self.dismiss)
+            self.modal.transient(self)
+            self.modal.wait_visibility()
+            self.modal.grab_set()
+
+            self.label = tk.Label(master=self.modal, text='Genre: ')
+            self.label.pack(side=tk.LEFT)
+            self.entry = tk.Entry(master=self.modal, width=50)
+            self.entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            self.entry.focus()
+            self.btn_submit = tk.Button(master=self.modal, text='Submit', command=self.submit)
+            self.btn_submit.pack(side=tk.RIGHT, padx=5)
+
+            self.modal.wait_window()
+        
+        def dismiss(self):
+            self.modal.grab_release()
+            self.modal.destroy()
+        
+        def submit(self):
+            if self.entry.get().split():
+                self.data = self.entry.get().strip()
+                self.finished(self.data)
+            self.dismiss()
