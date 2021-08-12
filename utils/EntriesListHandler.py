@@ -323,14 +323,13 @@ class GenrePacker:
         self.frame = tk.Frame(master=master, width=200)
         self.frame.pack(fill=tk.BOTH)
 
-        self.genres = list()
-        self.rows = list()
-        
+        self.rows = list()        
         self.genres = set()
+
         self.reload()
     
-    def load(self, genres : set):
-        self.genres = genres
+    def load(self, genres : set = set()):
+        self.genres = genres.copy()
         self.reload()
     
     def add_genre(self, value):
@@ -396,6 +395,7 @@ class GenrePacker:
             self.insert_to_row(value)
         
         self.insert_add_btn()
+        self.frame.update()
     
     class AddBtn(tk.Button):
         def __init__(self, master, text, finished, suggestions):

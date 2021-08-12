@@ -207,8 +207,7 @@ class App:
         self.filepath = ''
         self.window.title(App.TITLE)
 
-        self.Metis.reload()
-        self.Secretary.reload()
+        self.load_file_path()
         self.reload_config_path()
     
     def save_get_data(self):
@@ -315,12 +314,14 @@ class App:
                 else:
                     self.window.title(f'{App.TITLE} - {self.filepath}')
                     self.Secretary.reload()
+                    self.genres.load(self.Metis.filter)
                     return True
 
         else:
             self.window.title(App.TITLE)
             self.Metis.reload()
             self.Secretary.reload()
+            self.genres.load()
             return True
     
     def reload_config_path(self):

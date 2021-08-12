@@ -54,7 +54,6 @@ class SaveFile:
         "Extends the JSONEncoder to include encoding Save Files"
 
         def default(self, dct):
-            print(dct)
             if isinstance(dct, SaveFile):
                 res = { '__SaveFile__' : True }
                 for key, value in dct.__dict__.items():
@@ -158,7 +157,6 @@ class MetisClass:
             while len(self.recently_read_genre) > 7:
                 self.recently_read_genre.popleft()
         
-        print(recents)
         return chosen
         
         if self.availables:
