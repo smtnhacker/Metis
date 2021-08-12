@@ -8,24 +8,17 @@ class ListEntry:
     COLOR_AVAILABLE = "#e4ffbd"
     COLOR_UNAVAILABLE = "#ffbdbd"
 
-    def __init__(self, window, toggler, master, frame, edit_reloader, gui_reload, item_delete, item):
+    def __init__(self, frame, on_edit, gui_reload, on_delete, item):
         self.frame = frame
         self.item = item
         self.available = item.available
-        self.toggler = toggler
-        self.window = window
-        self.master = master
-        self.edit_reloader = edit_reloader
+        self.on_edit = on_edit
         self.gui_reload = gui_reload
-        self.item_delete = item_delete
+        self.on_delete = on_delete
     
         # --- Create the GUI --- #
 
         def on_click(event):
-            # Remove the toggling for now
-            # self.toggler(self.item)
-            # self.toggle()
-
             modal = EditDialog(self.frame, self.item)
 
             # Check if delete action should be performed
@@ -33,7 +26,7 @@ class ListEntry:
                 self.delete()
                 return
 
-            if not self.edit_reloader(self.item, modal.data):
+            if not self.on_edit(self.item, modal.data):
                 messagebox.showerror(message='Book entry already exists')
             else:
                 self.label.config(text=self.item.format_book())
@@ -56,26 +49,30 @@ class ListEntry:
     def delete(self):
         self.frame.destroy()
         self.gui_reload()
-        self.item_delete(self.item)
+        self.on_delete(self.item)
 
 class EntriesListHandler:
     """Handles the interaction between the GUI list and the actual data list"""
 
-    def __init__(self, window, master, collection, toggler, binding, reloader, edit_reloader, deleter):
+    def __init__(self, window, master, collection, binding, canvas_reloader, on_edit, on_delete, is_available, genres):
         self.item_list = dict()
         self.frame_list = dict()
+
         self.window = window
-        self.collection = collection
-        self.toggler = toggler
         self.master = master
+
+        self.genres = genres
+        self.collection = collection
+
         self.recursive_binding = binding
-        self.reload_canvas = reloader
-        self.edit_reloader = edit_reloader
-        self.item_delete = deleter
-        self.genres = None
+        self.reload_canvas = canvas_reloader
+        self.is_available = is_available
+
+        self.on_edit = on_edit
+        self.on_delete = on_delete
 
     def load(self):
-        for item in filter(lambda x : self.genres == None or any(genre in self.genres for genre in x.genre), self.collection):
+        for item in filter(self.is_available, self.collection):
             self.insert(item)
     
     def unload(self):
@@ -103,13 +100,10 @@ class EntriesListHandler:
     def insert(self, item):
         self.frame_list[item.get_uid()] = tk.Frame(self.master)
         self.item_list[item.get_uid()] = ListEntry(
-            window=self.window, 
-            toggler=self.toggler, 
-            master=self.master, 
             frame=self.frame_list[item.get_uid()], 
-            edit_reloader=self.edit_reloader, 
+            on_edit=self.on_edit, 
             gui_reload=self.gui_reload, 
-            item_delete=self.item_delete, 
+            on_delete=self.on_delete, 
             item=item
         )
 
@@ -122,10 +116,6 @@ class EntriesListHandler:
     def toggle(self, item_uid):
         self.item_list[item_uid].toggle()
     
-    def add_genre(self, genres):
-        self.genres = genres.copy() if genres else None
-        self.reload()
-
 class AddDialog:
     """Provides an interface for handling the modal in creating a new book item."""
 
@@ -315,7 +305,7 @@ class GenreGUI:
         self.parent_delete(self)
 
 class GenrePacker:
-    def __init__(self, master, suggestions=None, on_edit=None):
+    def __init__(self, master, genres=set(), suggestions=None, on_edit=None):
         self.master = master
         self.suggestions = suggestions
         self.on_edit = on_edit
@@ -324,12 +314,12 @@ class GenrePacker:
         self.frame.pack(fill=tk.BOTH)
 
         self.rows = list()        
-        self.genres = set()
+        self.genres = genres
 
         self.reload()
     
-    def load(self, genres : set = set()):
-        self.genres = genres.copy()
+    def load(self, genres):
+        self.genres = genres
         self.reload()
     
     def add_genre(self, value):
@@ -360,11 +350,12 @@ class GenrePacker:
             self.add_genre(value)
             btn_new_genre.destroy()
             self.insert_add_btn()
+
             if self.on_edit:
-                self.on_edit(self.genres)
+                self.on_edit()
 
         while True:
-            btn_new_genre = GenrePacker.AddBtn(master=self.rows[-1], text='+', finished=btn_click, suggestions=self.suggestions)
+            btn_new_genre = GenrePacker.AddBtn(master=self.rows[-1], text='+', on_submit=btn_click, suggestions=self.suggestions)
             btn_new_genre.pack(side=tk.LEFT)
             self.frame.update()
 
@@ -380,7 +371,7 @@ class GenrePacker:
         item.master.destroy()
         self.genres.remove(item.value)
         if self.on_edit:
-            self.on_edit(self.genres)
+            self.on_edit()
 
     def reload(self):
 
@@ -398,10 +389,10 @@ class GenrePacker:
         self.frame.update()
     
     class AddBtn(tk.Button):
-        def __init__(self, master, text, finished, suggestions):
+        def __init__(self, master, text, on_submit, suggestions):
             super().__init__(master=master, text=text)
             self.data = ''
-            self.finished = finished
+            self.on_submit = on_submit
             self.suggestions = suggestions
 
             self.config(command=self.call_dialog)
@@ -434,5 +425,5 @@ class GenrePacker:
         def submit(self):
             if self.entry.get().split():
                 self.data = self.entry.get().strip()
-                self.finished(self.data)
+                self.on_submit(self.data)
             self.dismiss()

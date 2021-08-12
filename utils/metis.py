@@ -105,8 +105,7 @@ class MetisClass:
         if save_file.collection:
             self.next_uid = max(x.get_uid() for x in self.collection.values()) + 1
     
-    def reload_available(self, genres):
-        self.filter = genres.copy()
+    def reload_available(self):
         self.availables = set(filter(self.is_available, self.collection.values()))
     
     def request_book(self):
@@ -170,6 +169,7 @@ class MetisClass:
         # should be available in the first place
         if not item.available:
             return False
+
         # should be correct genre
         if self.filter and not any(genre in self.filter for genre in item.genre):
             return False
@@ -188,15 +188,19 @@ class MetisClass:
     def insert_item(self, data):
         uid = self.get_next_uid()
         new_item = ReadingListItem(uid=uid, **data)
+
         if new_item.format_book() in self.indices.keys():
             return None
+
         self.collection[uid] = new_item
         if self.is_available(new_item):
             self.availables.add(new_item)
         self.indices[new_item.format_book()] = uid
         for genre in new_item.genre:
             self.available_genres.add(genre)
+
         print(f'Successfully added {new_item.format_book()}.')
+
         return new_item
     
     def edit_item(self, item, new_data):
@@ -208,18 +212,24 @@ class MetisClass:
         index = self.indices[item.format_book()]
         del self.indices[item.format_book()]
         self.indices[new_item.format_book()] = index
+
         if new_data['available'] != item.available:
             self.toggle(item)
+
         item.config(**new_data)
+
         for genre in new_data['genre']:
             self.available_genres.add(genre)
+
         return True
     
     def delete_item(self, item):
         if item.format_book() not in self.indices.keys():
             print(f'{item.format_book()} is missing. Cannot be deleted...')
             return
+
         index = self.indices[item.format_book()]
+        
         del self.collection[index] # So inefficient...
         del self.indices[item.format_book()]
         if item.available:

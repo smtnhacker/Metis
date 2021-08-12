@@ -54,6 +54,34 @@ class App:
         self.ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
         self.ent_book_given.grid(row=0, column=1, columnspan=4, padx=10, pady=10, sticky='ew')
 
+        # ----- Create the File Handling Buttons ----- #
+
+        self.btn_new_list = tk.Button(master=self.frm_main, text="New List", width=20)
+        self.btn_new_list.grid(row=1, column=0, padx=10, pady=5)
+
+        self.btn_load_list = tk.Button(master=self.frm_main, text="Load List", width=20)
+        self.btn_load_list.grid(row=1, column=1, padx=10, pady=5)
+
+        self.btn_save_list = tk.Button(master=self.frm_main, text="Save List", width=20)
+        self.btn_save_list.grid(row=1, column=2, padx=10, pady=5)
+
+        self.btn_save_as_list = tk.Button(master=self.frm_main, text="Save As", width=20)
+        self.btn_save_as_list.grid(row=1, column=3, padx=10, pady=5)
+
+        # ----- Create the Add Book Buttons ----- #
+
+        self.btn_add_book = tk.Button(master=self.frm_main, text="Add Book", width=20)
+        self.btn_add_book.grid(row=1, column=4, padx=10, pady=5)
+        self.btn_add_book.config(command=self.call_add_dialog)
+
+        # ----- Create the Genre Filters ----- #
+
+        self.lbl_genres = tk.Label(master=self.frm_main, text="Genres", width=20)
+        self.lbl_genres.grid(row=2, column=0, padx=10, pady=5)
+
+        self.frm_genres = tk.Frame(master=self.frm_main)
+        self.frm_genres.grid(row=2, column=1, padx=10, pady=5, columnspan=4, sticky='ew')
+
         # ----- Create a Scrollable Canvas ----- #
 
         self.frm_list = tk.Frame(master=self.window)
@@ -85,47 +113,19 @@ class App:
 
         # Make it scrollable using the mousewheel
 
-        def on_mouse_wheel(event):
+        def onCanvasMouseWheel(event):
             if self.scrollable:
                 self.canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
 
         def recursive_binding(w):
             "Recursion to bind a widget and all its children to be scrollable"
 
-            w.bind('<MouseWheel>', on_mouse_wheel)
+            w.bind('<MouseWheel>', onCanvasMouseWheel)
             for child in w.winfo_children():
                 recursive_binding(child)
         
-        self.canvas_list.bind('<MouseWheel>', on_mouse_wheel)
-        self.frm_container.bind('<MouseWheel>', on_mouse_wheel)
-
-        # ----- Create the File Handling Buttons ----- #
-
-        self.btn_new_list = tk.Button(master=self.frm_main, text="New List", width=20)
-        self.btn_new_list.grid(row=1, column=0, padx=10, pady=5)
-
-        self.btn_load_list = tk.Button(master=self.frm_main, text="Load List", width=20)
-        self.btn_load_list.grid(row=1, column=1, padx=10, pady=5)
-
-        self.btn_save_list = tk.Button(master=self.frm_main, text="Save List", width=20)
-        self.btn_save_list.grid(row=1, column=2, padx=10, pady=5)
-
-        self.btn_save_as_list = tk.Button(master=self.frm_main, text="Save As", width=20)
-        self.btn_save_as_list.grid(row=1, column=3, padx=10, pady=5)
-
-        # ----- Create the Add Book Buttons ----- #
-
-        self.btn_add_book = tk.Button(master=self.frm_main, text="Add Book", width=20)
-        self.btn_add_book.grid(row=1, column=4, padx=10, pady=5)
-        self.btn_add_book.config(command=self.CallCreateDialog)
-
-        # ----- Create the Genre Filters ----- #
-
-        self.lbl_genres = tk.Label(master=self.frm_main, text="Genres", width=20)
-        self.lbl_genres.grid(row=2, column=0, padx=10, pady=5)
-
-        self.frm_genres = tk.Frame(master=self.frm_main)
-        self.frm_genres.grid(row=2, column=1, padx=10, pady=5, columnspan=4, sticky='ew')
+        self.canvas_list.bind('<MouseWheel>', onCanvasMouseWheel)
+        self.frm_container.bind('<MouseWheel>', onCanvasMouseWheel)
 
         # --------------------------------------------------- #
         # ------------- HANDLE THE INTERACTIONS ------------- #
@@ -135,13 +135,14 @@ class App:
 
         self.Secretary = EntriesListHandler(
             window=self.window,
-            toggler=self.Metis.toggle, 
             master=self.frm_container, 
             binding=recursive_binding, 
-            reloader=self.reload_canvas,
+            canvas_reloader=self.reload_canvas,
             collection=self.Metis.collection.values(),
-            edit_reloader=self.Metis.edit_item,
-            deleter=self.Metis.delete_item,
+            on_edit=self.Metis.edit_item,
+            on_delete=self.Metis.delete_item,
+            is_available=self.Metis.is_available,
+            genres=self.Metis.filter
         )
 
         # ----- Set up File Handling ----- #
@@ -158,11 +159,11 @@ class App:
 
         # ----- Set up genre filter ----- #
 
-        def on_edit(genres):
-            self.Secretary.add_genre(genres)
-            self.Metis.reload_available(genres)
+        def onGenreEdit():
+            self.Metis.reload_available()
+            self.Secretary.reload()
 
-        self.genres = GenrePacker(master=self.frm_genres, suggestions=self.Metis.available_genres, on_edit=on_edit)
+        self.genres = GenrePacker(master=self.frm_genres, genres=self.Metis.filter, suggestions=self.Metis.available_genres, on_edit=onGenreEdit)
 
         # ----- Load the config file ----- #
 
@@ -184,7 +185,7 @@ class App:
         if requested_title != 'No book available':
             self.Secretary.toggle(requested_item.get_uid())
     
-    def CallCreateDialog(self):
+    def call_add_dialog(self):
         "Creates a dialog box for adding a new book entry"
 
         modal = AddDialog(self.window)
@@ -203,14 +204,11 @@ class App:
     
     @DialogHandler.ask_confirmation
     def cmd_new_list(self):
-
         self.filepath = ''
-        self.window.title(App.TITLE)
-
         self.load_file_path()
         self.reload_config_path()
     
-    def save_get_data(self):
+    def get_state_data(self):
         save_collection = self.Metis.collection
         save_recently_read = self.Metis.recently_read_genre
         save_filter = self.Metis.filter
@@ -225,11 +223,11 @@ class App:
         if not self.filepath:
             self.cmd_save_as_list()
         else:
-            data = self.save_get_data()
+            data = self.get_state_data()
             self.Dialogs.save_file(data=data, filepath=self.filepath)
     
     def cmd_save_as_list(self):
-        data = self.save_get_data()
+        data = self.get_state_data()
         res = self.Dialogs.cmd_save_list(data=data)
 
         if not res:
@@ -281,7 +279,7 @@ class App:
             config = configparser.ConfigParser()
             config.read(App.CONFIG_PATH)
             self.filepath = config['recent_file']['path']
-        except:
+        except Exception as e:
             config = configparser.ConfigParser()
             config['recent_file'] = { 'path' : '' }
             with open(App.CONFIG_PATH, 'w') as config_file:
@@ -314,14 +312,14 @@ class App:
                 else:
                     self.window.title(f'{App.TITLE} - {self.filepath}')
                     self.Secretary.reload()
-                    self.genres.load(self.Metis.filter)
+                    self.genres.reload()
                     return True
 
         else:
             self.window.title(App.TITLE)
             self.Metis.reload()
             self.Secretary.reload()
-            self.genres.load()
+            self.genres.reload()
             return True
     
     def reload_config_path(self):
