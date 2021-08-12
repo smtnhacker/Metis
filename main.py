@@ -6,7 +6,7 @@ from tkinter.filedialog import askopenfilename, asksaveasfilename
 import json
 import configparser
 
-from utils.metis import MetisClass, ReadingListItem
+from utils.metis import MetisClass, ReadingListItem, SaveFile
 from utils.EntriesListHandler import *
 from utils.DialogHandler import *
 
@@ -147,8 +147,8 @@ class App:
         # ----- Set up File Handling ----- #
 
         self.Dialogs = DialogHandler(
-            encoder_class=ReadingListItem.CollectionEncoder,
-            decoder_function=ReadingListItem.decode_collection
+            encoder_class=SaveFile.CollectionEncoder,
+            decoder_function=SaveFile.decode_collection
         )
 
         self.btn_new_list.config(command=self.cmd_new_list)
@@ -210,17 +210,28 @@ class App:
         self.Metis.reload()
         self.Secretary.reload()
         self.reload_config_path()
+    
+    def save_get_data(self):
+        save_collection = self.Metis.collection
+        save_recently_read = self.Metis.recently_read_genre
+        save_filter = self.Metis.filter
+        data = {
+            'collection' : save_collection,
+            'recently_read' : save_recently_read,
+            'filter' : save_filter,
+        }
+        return SaveFile(**data)
 
     def cmd_save_list(self):
         if not self.filepath:
             self.cmd_save_as_list()
         else:
-            data = self.Metis.collection
-            with open(self.filepath, 'w') as output_file:
-                json.dump(data, output_file, indent=4, cls=self.Dialogs.encoder)
+            data = self.save_get_data()
+            self.Dialogs.save_file(data=data, filepath=self.filepath)
     
     def cmd_save_as_list(self):
-        res = self.Dialogs.cmd_save_list(self.Metis.collection)
+        data = self.save_get_data()
+        res = self.Dialogs.cmd_save_list(data=data)
 
         if not res:
             return
@@ -279,7 +290,7 @@ class App:
             print('Successfully created config file!')
         else:
             print(f'Successfully loaded config file!\nFile Path: {self.filepath}')
-        
+
         if not self.load_file_path():
             config = configparser.ConfigParser()
             config['recent_file'] = { 'path' : '' }
@@ -294,7 +305,8 @@ class App:
             with open(self.filepath, 'r') as data_file:
                 data = data_file.read()
                 try:
-                    collection = json.loads(data, object_hook=self.Dialogs.decoder)
+                    save_file = json.loads(data, object_hook=self.Dialogs.decoder)
+                    self.Metis.reload(save_file)
                 except Exception as e:
                     messagebox.showerror(title='Error', message='Invalid config file! The recent_file path cannot be read.')
                     self.filepath = ''
@@ -302,11 +314,6 @@ class App:
                     return False
                 else:
                     self.window.title(f'{App.TITLE} - {self.filepath}')
-                    try:
-                        current_collection = collection.copy()
-                    except Exception as e:
-                        print(e)
-                    self.Metis.reload(current_collection)
                     self.Secretary.reload()
                     return True
 

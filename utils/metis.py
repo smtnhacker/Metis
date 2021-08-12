@@ -2,26 +2,108 @@ from collections import deque
 import random
 import json
 
+class ReadingListItem:
+    """Describes a book to read"""
+
+    def __init__(self, uid : int, read=False, **kwargs):
+        self.title = kwargs.pop('title')
+        self.subtitle = kwargs.get('subtitle')
+        self.author = kwargs.get('author', 'Anonymous')
+        self.date = kwargs.get('date', 'n.d.')
+        self.summary = kwargs.get('summary', 'TBA')
+        self.genre = set(kwargs.get('genre', []))
+
+        self.available = kwargs.get('available', True)
+        self.uid = uid
+    
+    def config(self, **kwargs):
+        for attrib, value in kwargs.items():
+            if attrib in self.__dict__.keys():
+                self.__dict__[attrib] = value
+            else:
+                print(f'Attribute {attrib} does not exist.')
+    
+    def format_book(self):
+        return f'{self.title} ({self.date}) by {self.author}'
+    
+    def get_uid(self):
+        return self.uid
+
+class SaveFile:
+    def __init__(self, **kwargs):
+        self.collection = kwargs.pop('collection', dict())
+        self.recently_read = kwargs.pop('recently_read', deque())
+        self.filter = kwargs.pop('filter', set())
+
+    # ------------------------------------------ #
+    # --------- For JSON Conversion ------------ #
+    # ------------------------------------------ #
+        
+    @staticmethod
+    def decode_collection(dct):
+        "A custom decoder for decoding the specific data"
+
+        if '__SaveFile__' in dct:
+            return SaveFile(**{key : value for key, value in dct.items() if key != '__SaveFile__'})
+        if '__ReadingListItem__' in dct:
+            return  ReadingListItem(**{key : value for key, value in dct.items() if key != '__ReadingListItem__'})
+        else:
+            return dct
+
+    class CollectionEncoder(json.JSONEncoder):
+        "Extends the JSONEncoder to include encoding Save Files"
+
+        def default(self, dct):
+            print(dct)
+            if isinstance(dct, SaveFile):
+                res = { '__SaveFile__' : True }
+                for key, value in dct.__dict__.items():
+                    if type(value) in {set, deque}:
+                        res[key] = list(value)
+                    else:
+                        res[key] = value
+                return res
+            elif isinstance(dct, ReadingListItem):
+                res = { '__ReadingListItem__' : True }
+                for key, value in dct.__dict__.items():
+                    if type(value) == set:
+                        res[key] = list(value)
+                    else:
+                        res[key] = value
+                return res
+            else:
+                return super().default(dct)
+
 class MetisClass:
     """Provides an interface for handling the reading lists and core functionalities"""
 
-    def __init__(self, collection=dict()):
+    def __init__(self):
         self.collection = dict()
-        self.reload(collection)
-        self.next_uid = 0
-        self.available_genres = set()
-        self.filter = None
+        self.filter = set()
+        self.indices = dict()
+        self.availables = set()
 
+        self.next_uid = 0
+
+        self.available_genres = set()
         self.recently_read_genre = deque()
 
-    def reload(self, collection=dict()):
+    def reload(self, save_file : SaveFile = SaveFile()):
         self.collection.clear()
-        self.collection.update({ int(index) : value for index, value in collection.items() }) 
-        self.indices = { item.format_book() : item.get_uid() for item in self.collection.values() }
-        self.availables = set(filter(self.is_available, self.collection.values()))
-        self.available_genres = set(genre for item in collection.values() for genre in item.genre)
+        self.collection.update({ int(index) : value for index, value in save_file.collection.items() }) 
 
-        if collection:
+        self.filter.clear()
+        self.filter.update({ genre for genre in save_file.filter })
+
+        self.indices = { item.format_book() : item.get_uid() for item in self.collection.values() }
+
+        self.availables = set(filter(self.is_available, self.collection.values()))
+        self.available_genres = set(genre for item in self.collection.values() for genre in item.genre)
+
+        self.recently_read_genre.clear()
+        self.recently_read_genre.extend(save_file.recently_read)
+
+        if save_file.collection:
             self.next_uid = max(x.get_uid() for x in self.collection.values()) + 1
     
     def reload_available(self, genres):
@@ -149,58 +231,3 @@ class MetisClass:
         res = self.next_uid
         self.next_uid += 1
         return res
-
-class ReadingListItem:
-    """Describes a book to read"""
-
-    def __init__(self, uid : int, read=False, **kwargs):
-        self.title = kwargs.pop('title')
-        self.subtitle = kwargs.get('subtitle')
-        self.author = kwargs.get('author', 'Anonymous')
-        self.date = kwargs.get('date', 'n.d.')
-        self.summary = kwargs.get('summary', 'TBA')
-        self.genre = set(kwargs.get('genre', []))
-
-        self.available = kwargs.get('available', True)
-        self.uid = uid
-    
-    def config(self, **kwargs):
-        for attrib, value in kwargs.items():
-            if attrib in self.__dict__.keys():
-                self.__dict__[attrib] = value
-            else:
-                print(f'Attribute {attrib} does not exist.')
-    
-    def format_book(self):
-        return f'{self.title} ({self.date}) by {self.author}'
-    
-    def get_uid(self):
-        return self.uid
-
-    # ------------------------------------------ #
-    # --------- For JSON Conversion ------------ #
-    # ------------------------------------------ #
-        
-    @staticmethod
-    def decode_collection(dct):
-        "A custom decoder for decoding Reading List specific data"
-
-        if '__ReadingListItem__' in dct:
-            return  ReadingListItem(**{key : value for key, value in dct.items() if key != '__ReadingListItem__'})
-        else:
-            return dct
-
-    class CollectionEncoder(json.JSONEncoder):
-        "Extends the JSONEncoder to include encoding Reading Lists"
-
-        def default(self, dct):
-            if isinstance(dct, ReadingListItem):
-                res = { '__ReadingListItem__' : True }
-                for key, value in dct.__dict__.items():
-                    if type(value) == set:
-                        res[key] = list(value)
-                    else:
-                        res[key] = value
-                return res
-            else:
-                return super().default(dct)
