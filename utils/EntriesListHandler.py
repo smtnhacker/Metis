@@ -380,7 +380,8 @@ class GenrePacker:
     def delete_item(self, item):
         item.master.destroy()
         self.genres.remove(item.value)
-        self.on_edit(self.genres)
+        if self.on_edit:
+            self.on_edit(self.genres)
 
     def reload(self):
 

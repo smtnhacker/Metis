@@ -1,3 +1,4 @@
+from collections import deque
 import random
 import json
 
@@ -10,6 +11,8 @@ class MetisClass:
         self.next_uid = 0
         self.available_genres = set()
         self.filter = None
+
+        self.recently_read_genre = deque()
 
     def reload(self, collection=dict()):
         self.collection.clear()
@@ -26,7 +29,55 @@ class MetisClass:
         self.availables = set(filter(self.is_available, self.collection.values()))
     
     def request_book(self):
-        "Returns a book from the available collection"
+        """
+        Returns a book from the available collection.
+        
+        In order to make the reading experience a bit more
+        varied, Metis takes note of the previously read books
+        and 'tries' to avoid giving them.
+        """
+
+        if not self.availables:
+            return None
+
+        chosen, population = None, list(self.availables)
+        recents = [ (5*(index+1), genre) for index, genre in enumerate(self.recently_read_genre)]
+
+        def okay(item, arr):
+            "Check if there are conflicting genres"
+            res = True
+            for genre in item.genre:
+                for index, x in enumerate(arr):
+                    tries, illegal_genre = x
+                    if genre == illegal_genre and tries:
+                        res = False
+                        arr[index] = (tries-1, illegal_genre)
+            return res
+
+
+        while not chosen:
+            possible = random.choice(population)
+            if okay(possible, recents):
+                chosen = possible
+        
+        if chosen:
+            self.toggle(chosen)
+
+            # update the recently read genre
+            temp_genre, to_add_genre = set(self.recently_read_genre), list()
+            for genre in chosen.genre:
+                if genre in temp_genre:
+                    temp_genre.remove(genre)
+                to_add_genre.append(genre)
+            temp_genre = list(temp_genre)
+            temp_genre.extend(to_add_genre)
+            self.recently_read_genre = deque(temp_genre)
+
+            while len(self.recently_read_genre) > 7:
+                self.recently_read_genre.popleft()
+        
+        print(recents)
+        return chosen
         
         if self.availables:
             chosen = random.choice(list(self.availables))
