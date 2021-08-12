@@ -119,6 +119,14 @@ class App:
         self.btn_add_book.grid(row=1, column=4, padx=10, pady=5)
         self.btn_add_book.config(command=self.CallCreateDialog)
 
+        # ----- Create the Genre Filters ----- #
+
+        self.lbl_genres = tk.Label(master=self.frm_main, text="Genres", width=20)
+        self.lbl_genres.grid(row=2, column=0, padx=10, pady=5)
+
+        self.frm_genres = tk.Frame(master=self.frm_main)
+        self.frm_genres.grid(row=2, column=1, padx=10, pady=5, columnspan=4, sticky='ew')
+
         # --------------------------------------------------- #
         # ------------- HANDLE THE INTERACTIONS ------------- #
         # --------------------------------------------------- #
@@ -147,6 +155,14 @@ class App:
         self.btn_save_list.config(command=self.cmd_save_list)
         self.btn_load_list.config(command=self.cmd_load_list)
         self.btn_save_as_list.config(command=self.cmd_save_as_list)
+
+        # ----- Set up genre filter ----- #
+
+        def on_edit(genres):
+            self.Secretary.add_genre(genres)
+            self.Metis.reload_available(genres)
+
+        self.genres = GenrePacker(master=self.frm_genres, suggestions=self.Metis.available_genres, on_edit=on_edit)
 
         # ----- Load the config file ----- #
 
@@ -182,7 +198,8 @@ class App:
         if not new_item:
             messagebox.showerror(message='Book already exists.')
         else:
-            self.Secretary.insert(new_item)
+            if self.Metis.is_available(new_item):
+                self.Secretary.insert(new_item)
     
     @DialogHandler.ask_confirmation
     def cmd_new_list(self):

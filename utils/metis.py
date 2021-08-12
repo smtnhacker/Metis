@@ -8,15 +8,22 @@ class MetisClass:
         self.collection = dict()
         self.reload(collection)
         self.next_uid = 0
+        self.available_genres = set()
+        self.filter = None
 
     def reload(self, collection=dict()):
         self.collection.clear()
         self.collection.update({ int(index) : value for index, value in collection.items() }) 
         self.indices = { item.format_book() : item.get_uid() for item in self.collection.values() }
-        self.availables = set(filter(lambda x : x.available, self.collection.values()))
+        self.availables = set(filter(self.is_available, self.collection.values()))
+        self.available_genres = set(genre for item in collection.values() for genre in item.genre)
 
         if collection:
             self.next_uid = max(x.get_uid() for x in self.collection.values()) + 1
+    
+    def reload_available(self, genres):
+        self.filter = genres.copy()
+        self.availables = set(filter(self.is_available, self.collection.values()))
     
     def request_book(self):
         "Returns a book from the available collection"
@@ -28,11 +35,21 @@ class MetisClass:
         else:
             return None
     
+    def is_available(self, item):
+        # should be available in the first place
+        if not item.available:
+            return False
+        # should be correct genre
+        if self.filter and not any(genre in self.filter for genre in item.genre):
+            return False
+        
+        return True
+    
     def toggle(self, item):
         index = self.indices[item.format_book()]
         self.collection[index].available = not self.collection[index].available
 
-        if self.collection[index].available:
+        if self.is_available(self.collection[index]):
             self.availables.add(item)
         else:
             self.availables.remove(item)
@@ -43,8 +60,11 @@ class MetisClass:
         if new_item.format_book() in self.indices.keys():
             return None
         self.collection[uid] = new_item
-        self.availables.add(new_item)
+        if self.is_available(new_item):
+            self.availables.add(new_item)
         self.indices[new_item.format_book()] = uid
+        for genre in new_item.genre:
+            self.available_genres.add(genre)
         print(f'Successfully added {new_item.format_book()}.')
         return new_item
     
@@ -60,6 +80,8 @@ class MetisClass:
         if new_data['available'] != item.available:
             self.toggle(item)
         item.config(**new_data)
+        for genre in new_data['genre']:
+            self.available_genres.add(genre)
         return True
     
     def delete_item(self, item):
@@ -86,7 +108,7 @@ class ReadingListItem:
         self.author = kwargs.get('author', 'Anonymous')
         self.date = kwargs.get('date', 'n.d.')
         self.summary = kwargs.get('summary', 'TBA')
-        self.genre = kwargs.get('genre', {})
+        self.genre = set(kwargs.get('genre', []))
 
         self.available = kwargs.get('available', True)
         self.uid = uid
@@ -124,7 +146,10 @@ class ReadingListItem:
             if isinstance(dct, ReadingListItem):
                 res = { '__ReadingListItem__' : True }
                 for key, value in dct.__dict__.items():
-                    res[key] = value
+                    if type(value) == set:
+                        res[key] = list(value)
+                    else:
+                        res[key] = value
                 return res
             else:
                 return super().default(dct)

@@ -72,9 +72,10 @@ class EntriesListHandler:
         self.reload_canvas = reloader
         self.edit_reloader = edit_reloader
         self.item_delete = deleter
+        self.genres = None
 
     def load(self):
-        for item in self.collection:
+        for item in filter(lambda x : self.genres == None or any(genre in self.genres for genre in x.genre), self.collection):
             self.insert(item)
     
     def unload(self):
@@ -120,6 +121,10 @@ class EntriesListHandler:
     
     def toggle(self, item_uid):
         self.item_list[item_uid].toggle()
+    
+    def add_genre(self, genres):
+        self.genres = genres.copy() if genres else None
+        self.reload()
 
 class AddDialog:
     """Provides an interface for handling the modal in creating a new book item."""
@@ -169,7 +174,7 @@ class AddDialog:
 
         self.lbl_genres = tk.Label(master=self.frm_entries, text='Genres: ')
         self.lbl_genres.grid(row=5, column=0)
-        self.frm_genres = tk.Frame(master=self.frm_entries, bg='red')
+        self.frm_genres = tk.Frame(master=self.frm_entries)
         self.frm_genres.grid(row=5, column=1, pady=5, sticky='nsew')
         self.genres = GenrePacker(master=self.frm_genres)
         
@@ -198,6 +203,7 @@ class AddDialog:
         author = self.ent_author.get().strip()
         date = self.ent_date.get().strip()
         summary = self.txt_summary.get("1.0", tk.END)
+        genre = self.genres.genres
 
         data = {
             'title': title,
@@ -205,6 +211,7 @@ class AddDialog:
             'author': author if author else 'Anonymous',
             'date': date if date else 'n.d.',
             'summary': summary,
+            'genre': genre
         }
 
         self.submit(data)
@@ -308,8 +315,10 @@ class GenreGUI:
         self.parent_delete(self)
 
 class GenrePacker:
-    def __init__(self, master):
+    def __init__(self, master, suggestions=None, on_edit=None):
         self.master = master
+        self.suggestions = suggestions
+        self.on_edit = on_edit
 
         self.frame = tk.Frame(master=master, width=200)
         self.frame.pack(fill=tk.BOTH)
@@ -317,7 +326,7 @@ class GenrePacker:
         self.genres = list()
         self.rows = list()
         
-        self.genres = {}
+        self.genres = set()
         self.reload()
     
     def load(self, genres : set):
@@ -352,9 +361,11 @@ class GenrePacker:
             self.add_genre(value)
             btn_new_genre.destroy()
             self.insert_add_btn()
+            if self.on_edit:
+                self.on_edit(self.genres)
 
         while True:
-            btn_new_genre = GenrePacker.AddBtn(master=self.rows[-1], text='+', finished=btn_click)
+            btn_new_genre = GenrePacker.AddBtn(master=self.rows[-1], text='+', finished=btn_click, suggestions=self.suggestions)
             btn_new_genre.pack(side=tk.LEFT)
             self.frame.update()
 
@@ -369,6 +380,7 @@ class GenrePacker:
     def delete_item(self, item):
         item.master.destroy()
         self.genres.remove(item.value)
+        self.on_edit(self.genres)
 
     def reload(self):
 
@@ -385,10 +397,11 @@ class GenrePacker:
         self.insert_add_btn()
     
     class AddBtn(tk.Button):
-        def __init__(self, master, text, finished):
+        def __init__(self, master, text, finished, suggestions):
             super().__init__(master=master, text=text)
             self.data = ''
             self.finished = finished
+            self.suggestions = suggestions
 
             self.config(command=self.call_dialog)
         
