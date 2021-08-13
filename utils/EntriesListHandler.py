@@ -1,9 +1,53 @@
+"""
+Entries Handler
+
+Contains the classes that handles the interaction
+between Metis (backend) and the GUI (frontend).
+
+Includes:
+1. class EntriesListHandler - the major handler
+2. class ListEntry - handler for individual entries
+3. class AddDialog - handler for the add dialog box
+4. class EditDialog - handler for the edit dialog box
+5. class GenrePacker - handler for the genre frame
+6. class GenreGUI - handler for individual genres
+
+Rationale: 
+    To properly modularize the project, the back-end
+    and front-end must be, as much as possible, independent
+    from each other. The classes here serve as the 
+    FRONTEND handlers that uses data from the
+    back-end to create the necessary GUI.
+
+    As much as possible, classes here MUST NOT store
+    their own data, unless that data is something simple
+    like a string or ReadingListItem. Instead, they should
+    reference from the back-end and reload instead.
+"""
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 
 class ListEntry:
-    """An interactive Frame that represents a reading list item."""
+    """
+    An interactive Frame that represents a reading list item.
+    
+    The ListEntry serves as the class that creates an individual
+    item in the scrollable reading list, and maintains the methods
+    that specifically modifies the specific item.
+
+    Life Cycle:
+        Whenever a new ReadingListItem is created,
+        the item is passed to the EntriesListHandler. 
+        There, a ListEntry is created. 
+
+        Whenever the an item is up for the deletion,
+        the ListEntry initiates its deletion by first
+        destroying the GUI, the reference in the parent,
+        and then calling the delete function provided by
+        the back-end.
+    """
 
     COLOR_AVAILABLE = "#e4ffbd"
     COLOR_UNAVAILABLE = "#ffbdbd"
@@ -103,7 +147,7 @@ class EntriesListHandler:
             frame=self.frame_list[item.get_uid()], 
             on_edit=self.on_edit, 
             gui_reload=self.gui_reload, 
-            on_delete=self.on_delete, 
+            on_delete=self.delete, 
             item=item
         )
 
@@ -112,6 +156,11 @@ class EntriesListHandler:
         # some shz on scrollbar
         self.recursive_binding(self.frame_list[item.get_uid()])
         self.reload_canvas()
+    
+    def delete(self, item):
+        del self.frame_list[item.get_uid()]
+        del self.item_list[item.get_uid()]
+        self.on_delete(item)
     
     def toggle(self, item_uid):
         self.item_list[item_uid].toggle()
