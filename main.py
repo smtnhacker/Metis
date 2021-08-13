@@ -1,3 +1,25 @@
+# # -------------------------------- #
+#        Metis - Reading Guide
+#        By Something_Hacker
+# # -------------------------------- #
+#
+# Rationale:
+#   When one has an ever growing reading list, 
+#   it is not surprising to find oneself in a
+#   state of choice paralysis. As such, it
+#   might be useful to leave the dilemma of
+#   choosing to something cold and calculating,
+#   AKA, a program.
+# 
+# Description:
+#   Metis is a simple program that lets the user
+#   create, edit, and save reading lists. Upon
+#   the user's request, Metis will provide a book.
+#   To improve the reading experience, the genre
+#   of the provided book will vary as much as possible.
+#
+# # -------------------------------------------------- # #
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
@@ -114,6 +136,7 @@ class App:
         # Make it scrollable using the mousewheel
 
         def onCanvasMouseWheel(event):
+            "Enables the canvas to be scrollable using the mouse wheel."
             if self.scrollable:
                 self.canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
 
@@ -160,10 +183,17 @@ class App:
         # ----- Set up genre filter ----- #
 
         def onGenreEdit():
+            "Whenever the GenrePacker updates the genres, the App must also be updated."
+
             self.Metis.reload_available()
             self.Secretary.reload()
 
-        self.genres = GenrePacker(master=self.frm_genres, genres=self.Metis.filter, suggestions=self.Metis.available_genres, on_edit=onGenreEdit)
+        self.genres = GenrePacker(
+            master=self.frm_genres, 
+            genres=self.Metis.filter, 
+            suggestions=self.Metis.available_genres, # Should serve as to show the current genres in the App
+            on_edit=onGenreEdit,
+        )
 
         # ----- Load the config file ----- #
 
@@ -174,7 +204,17 @@ class App:
     # -------------------------------------------------- #
 
     def request_book(self):
-        "Requests a title (string) from Metis"
+        """
+        Requests a book item from Metis and displays it.
+        
+        Rationale: To reduce complexity from Metis, the requested
+            item must be the ReadingItemList and the App should
+            handle the processing.
+        
+        Result (if success):
+            1. The entry text will be updated.
+            2. The item will be toggled (both in GUI and in Metis).
+        """
 
         requested_item = self.Metis.request_book()
         requested_title = requested_item.format_book() if requested_item else 'No book available'
@@ -186,7 +226,18 @@ class App:
             self.Secretary.toggle(requested_item.get_uid())
     
     def call_add_dialog(self):
-        "Creates a dialog box for adding a new book entry"
+        """
+        Creates a dialog box for adding a new book entry
+        
+        Rationale: When creating a new book, three steps
+            are currently taken:
+            1. Get data from the dialog
+            2. Insert data to Metis
+            3. Update others.
+            This function should serve as the integrating
+            function to simplify the function of each independent
+            components.
+        """
 
         modal = AddDialog(self.window)
 
@@ -204,11 +255,43 @@ class App:
     
     @DialogHandler.ask_confirmation
     def cmd_new_list(self):
-        self.filepath = ''
-        self.load_file_path()
+        """
+        Creates a new list by erasing all previously added data.
+
+        Rationale: Creating a new list is the same as loading an
+            empty file. To make things uniform, this must be 
+            similar to that of loading.
+        
+        Result:
+            1. The contents will be empty.
+            2. The self.filepath will be empty('')
+            3. The config will be reset.
+        """
+
+        self.filepath = self.attempt_load('')
         self.reload_config_path()
     
     def get_state_data(self):
+        """
+        Returns a SaveFile to use for saving.
+
+        Rationale: To provide a uniform way of obtaining the
+            data needed for saving. All save functions must
+            use this function when obtaining data.
+
+        Currently, a Save File has the following components:
+        1. collection : dict 
+            - a (key, value) pair of ReadingListItem.uid : ReadingListItem
+              that is used primarily by Metis.
+        2. recently_read : Collections.deque
+            - a deque of string values that represents the recenlty read genres
+        3. filter : set
+            - a set of the filters currently applied
+        
+        Return Value:
+            SaveFile - stores the current state of Metis
+        """
+        
         save_collection = self.Metis.collection
         save_recently_read = self.Metis.recently_read_genre
         save_filter = self.Metis.filter
@@ -220,6 +303,16 @@ class App:
         return SaveFile(**data)
 
     def cmd_save_list(self):
+        """
+        Saves if a save file already exists, if not, creates a new save file.
+
+        Rationale: Users should not be burdened with overwriting the same
+            file when saving. If a save file already exists, this function
+            must purely get the current data and dump in to the save file.
+            But if no save file exists, it must be exactly the same with
+            that of save as.
+        """
+
         if not self.filepath:
             self.cmd_save_as_list()
         else:
@@ -227,24 +320,70 @@ class App:
             self.Dialogs.save_file(data=data, filepath=self.filepath)
     
     def cmd_save_as_list(self):
-        data = self.get_state_data()
-        res = self.Dialogs.cmd_save_list(data=data)
+        """
+        Creates a new save file (if saved).
 
-        if not res:
+        Rationale: When saving, there are 4 major steps:
+            1. Getting the state data
+            2. Creating a save file
+            3. Dumping the data
+            4. Updating the App config
+            This step serves as the integrating function
+            to keep each of the steps as independent as possible.
+
+            It should be noted that there are parallels between
+            saving and loading, specifically step 4. Saving should
+            effectively reproduce the same result as that of loading,
+            without having to actually load for performance reasons.
+        
+        It should be noted that if no save file is created,
+        there must NOT be any changes. Reasons for failure includes:
+            - user canceling the action
+            - unable to dump data
+        If there are failure, the current state must NOT be affected
+        in any way.
+
+        Result (if success):
+            1. The self.filepath will be updated.
+            2. The config will be updated.
+        """
+        
+        data = self.get_state_data()
+        save_filepath = self.Dialogs.cmd_save_list(data=data)
+
+        if not save_filepath:
             return
 
-        self.filepath = res
-        self.window.title(f'{App.TITLE} - {self.filepath}')
+        self.filepath = save_filepath
         self.reload_config_path()
 
     def cmd_load_list(self):
+        """
+        Loads a save file through a dialog.
+
+        Rationale: Loading in this manner occurs in 3 steps:
+            1. Getting filepath from dialog
+            2. Attempting to load filepath
+            3. Updating the App config
+            This step serves as the integrating function
+            to keep each of the steps as independent as possible.
+
+        It should be noted that for this step, the failure of
+        not acquiring any filepath should NOT result to any
+        changes within the App.
+
+        Result (if success):
+            1. The data will be loaded.
+            2. The self.filepath will be updated.
+            3. The config will be updated.
+        """
+
         res = self.Dialogs.cmd_load_list()
 
         if not res:
             return
 
-        self.filepath = res['filepath']
-        self.load_file_path()
+        self.filepath = self.attempt_load(res['filepath'])
         self.reload_config_path()
 
     # ------------------------------------------- #
@@ -252,7 +391,15 @@ class App:
     # ------------------------------------------- #
     
     def check_scrollbar_visibility(self):
-        "Hides / Unhides the scrollbar when necessary"
+        """
+        Hides / Unhides the scrollbar when necessary.
+        
+        Calculates if the required height for the
+        frm_container (the tk.Frame that currently
+        holds the reading list) exceeds that of the
+        canvas and adjusts the scrollbar and scrollability
+        accordingly. 
+        """
 
         minHeight = self.frm_container.winfo_reqheight()
 
@@ -264,7 +411,13 @@ class App:
             self.scrollable = True
 
     def reload_canvas(self):
-        "Re-calibrates the canvas to update the scrollbar"
+        """
+        Re-calibrates the canvas to update the scrollbar.
+        
+        For some tkinter reason, the scrollbar does not re-compute
+        its size automatically whenever its sister-component
+        changes size. This serves as a force recomputation.
+        """
 
         self.scrollbar.grid(row=0, column=1, sticky='nsew')
         self.canvas_list.configure(scrollregion=self.canvas_list.bbox('all'))
@@ -272,57 +425,148 @@ class App:
         self.check_scrollbar_visibility()
         
     def loadApp(self):
-        "Sets up the windows and the App configurations."
+        """
+        Sets up the windows and the App configurations.
+
+        Rationale: At the beginning of the App, the configurations
+            must be loaded. This includes loading the previously
+            used reading list to provide ease of experience for the
+            user. 
+
+            It might be possible that the config file is corrupted,
+            and if such occurs, the App MUST still load, albeit empty
+            and the config file should be fixed.
+        """
 
         # Load the config file
+
+        config = configparser.ConfigParser()
         try:
-            config = configparser.ConfigParser()
             config.read(App.CONFIG_PATH)
-            self.filepath = config['recent_file']['path']
+            filepath = config['recent_file']['path']
+        
+        # In the case that the config file is corrupted,
+        # correct the file
+
         except Exception as e:
-            config = configparser.ConfigParser()
             config['recent_file'] = { 'path' : '' }
+            filepath = ''
             with open(App.CONFIG_PATH, 'w') as config_file:
                 config.write(config_file)
             print('Successfully created config file!')
-        else:
+
+        # Try to load the filepath
+
+        did_load = self.load_file_path(filepath)
+        
+        if did_load:
+            self.filepath = filepath
+            self.reload_config_path()
             print(f'Successfully loaded config file!\nFile Path: {self.filepath}')
 
-        if not self.load_file_path():
-            config = configparser.ConfigParser()
+        # If the filepath is corrupted, just start from scratch
+
+        else:
             config['recent_file'] = { 'path' : '' }
             with open(App.CONFIG_PATH, 'w') as config_file:
                 config.write(config_file)
-            print('Deleted recent file from config')
+            print('Deleted recent_file path from config')
     
-    def load_file_path(self):
-        "Configures the App and loads the filepath"
+    def attempt_load(self, filepath : str):
+        """
+        Attempts to load the filepath.
 
-        if self.filepath:
-            with open(self.filepath, 'r') as data_file:
-                data = data_file.read()
-                try:
-                    save_file = json.loads(data, object_hook=self.Dialogs.decoder)
-                    self.Metis.reload(save_file)
-                except Exception as e:
-                    messagebox.showerror(title='Error', message='Invalid config file! The recent_file path cannot be read.')
-                    self.filepath = ''
-                    print(e)
-                    return False
-                else:
-                    self.window.title(f'{App.TITLE} - {self.filepath}')
-                    self.Secretary.reload()
-                    self.genres.reload()
-                    return True
+        Rationale: Loading files may lead to an error.
+            In such cases, something must still be loaded
+            (it might be an empty file or the current file).
+            Thus, try first to load the file.
+        
+        Parameter:
+            1. filepath : str
+                - the filepath of the file to be loaded
+        
+        Return Value:
+            filepath : str
+                - if the filepath is valid, then it is returned
+            self.filepath : str
+                - if the provided filepath is not valid, the 
+                  current filepath is returned
+        """
+
+        did_load = self.load_file_path(filepath)
+        if did_load:
+            return filepath
+        return self.filepath
+    
+    def load_file_path(self, filepath):
+        """
+        Loads the filepath and returns if the attempt was a success.
+        
+        Rationale: This is the actual "loading" in the entire loading
+            process. To know whether the loading was a success, this
+            must be able to cover all the possible outcomes.
+        
+        Current outcomes (SUCCESS?):
+            - Loaded successfuly (TRUE)
+            - Invalid filepath (FALSE)
+            - Corrupted file (FALSE)
+            - Empty filepath (TRUE)
+        
+        Parameter:
+            1. filepath : str
+                - the filepath to be loaded
+        
+        Return Value:
+            1. Success? : boolean
+                - tells whether an error occured or not.
+        """
+
+        if filepath:
+            try:
+                with open(filepath, 'r') as data_file:
+                    data = data_file.read()
+                    try:
+                        save_file = json.loads(data, object_hook=self.Dialogs.decoder)
+                        test_load = MetisClass()
+                        test_load.reload(save_file)
+                    except Exception as e:
+                        messagebox.showerror(title='Error', message='File cannot be read.')
+                        print(e)
+                        return False
+                    else:
+                        self.Metis.reload(save_file)
+            except FileNotFoundError:
+                messagebox.showerror(title='Error', message='Invalid config filepath')
+                return False
 
         else:
-            self.window.title(App.TITLE)
             self.Metis.reload()
-            self.Secretary.reload()
-            self.genres.reload()
-            return True
+
+        self.Secretary.reload()
+        self.genres.reload()
+
+        return True
     
     def reload_config_path(self):
+        """
+        Updates the config and the window.
+
+        Rationale: Whenever the App changes filepath (whether
+            by loading, saving, or create a new list), the 
+            window and the configurations must be updated to
+            ensure an smooth user experience the next time they
+            open the App.
+        
+        Pre-requisite:
+            The App MUST have a self.filepath that reflects
+            the current contents.
+        """
+
+        if self.filepath:
+            self.window.title(f'{App.TITLE} - {self.filepath}')
+        else:
+            self.window.title(App.TITLE)
+
         config = configparser.ConfigParser()
         config.read(App.CONFIG_PATH)
         config['recent_file']['path'] = self.filepath
