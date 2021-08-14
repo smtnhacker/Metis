@@ -165,7 +165,6 @@ class App:
             on_edit=self.Metis.edit_item,
             on_delete=self.Metis.delete_item,
             is_available=self.Metis.is_available,
-            genres=self.Metis.filter
         )
 
         # ----- Set up File Handling ----- #
@@ -191,7 +190,7 @@ class App:
         self.genres = GenrePacker(
             master=self.frm_genres, 
             genres=self.Metis.filter, 
-            suggestions=self.Metis.available_genres, # Should serve as to show the current genres in the App
+            suggestions=self.Metis.available_genres, # Should serve to show the current genres in the App
             on_edit=onGenreEdit,
         )
 
@@ -552,7 +551,7 @@ class App:
         Updates the config and the window.
 
         Rationale: Whenever the App changes filepath (whether
-            by loading, saving, or create a new list), the 
+            by loading, saving, or creating a new list), the 
             window and the configurations must be updated to
             ensure an smooth user experience the next time they
             open the App.

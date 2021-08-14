@@ -37,6 +37,13 @@ class ListEntry:
     item in the scrollable reading list, and maintains the methods
     that specifically modifies the specific item.
 
+    Rationale: Each method must be localized as much as possible.
+        ALL changes in a specific ReadingListItem must pass
+        through its corresponding ListEntry. However,
+        it should be noted that if there is a method that
+        modifies both the GUI and Metis, Metis will be the
+        independent one.
+
     Life Cycle:
         Whenever a new ReadingListItem is created,
         the item is passed to the EntriesListHandler. 
@@ -47,6 +54,22 @@ class ListEntry:
         destroying the GUI, the reference in the parent,
         and then calling the delete function provided by
         the back-end.
+    
+    Parameters:
+        frame : tk.Frame
+            - refers to the parent frame. This will be created by 
+              the parent handler
+        item : ReadingListItem
+            - the entry that the ListEntry represents
+        on_edit : function
+            - function to call after an edit has been made. Preferably,
+              this refers to Metis' edit command
+        on_delete : function
+            - function to call after a delete has been made. Preferable,
+              this refers to Metis' delete command
+        gui_reload : function
+            - function that reloads the parent handler's GUI. Only
+              used to correct some annoying technicalities
     """
 
     COLOR_AVAILABLE = "#e4ffbd"
@@ -63,6 +86,10 @@ class ListEntry:
         # --- Create the GUI --- #
 
         def on_click(event):
+            """
+            Current function of clicking: Edit the entry.
+            """
+            
             modal = EditDialog(self.frame, self.item)
 
             # Check if delete action should be performed
@@ -86,26 +113,72 @@ class ListEntry:
         self.label.pack(padx=5, pady=5)
     
     def toggle(self):
+        """
+        Toggles ONLY the GUI aspect of the entry.
+        
+        Rationale: It is possible that an item will be
+            toggled through another means. As such, the
+            burden of adjusting will be carried by the GUI
+            and the toggle must only affect the GUI.
+        """
+
         self.available = not self.available
         self.frame.config(bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
         self.label.config(background=self.frame['bg'])
     
     def delete(self):
+        "Deletes the GUI first and calls for its item to be deleted backend afterwards."
+
         self.frame.destroy()
         self.gui_reload()
         self.on_delete(self.item)
 
 class EntriesListHandler:
-    """Handles the interaction between the GUI list and the actual data list"""
+    """
+    Handles the interaction between the GUI list and the actual data list.
+    
+    Provides the main interface for handling interaction between the
+    back-end (Metis) and the GUI, which the class itself handles.
 
-    def __init__(self, window, master, collection, binding, canvas_reloader, on_edit, on_delete, is_available, genres):
+    Rationale: In juggling the data and interaction, the idea is
+        that this class will handle most of the heavier and dirtier
+        burden. To implement such a framework, Metis will provide
+        the methods in modifying the data (at the back-end side),
+        the EntriesListHandler (or Secretary), will provide those
+        methods to the specific components that will need them.
+    
+    Parameters:
+        window : tk.Tk
+            - refers to the root of the application
+        master : tk.Frame
+            - the parent frame of the reading list GUI
+        collection
+            - reference to the backend collections
+        binding : function
+            - function for recursive binding to give every widget 
+              a particular property
+        canvas_reloader : function
+            - an annoying, but necessary function to force update 
+              the scrollbar
+        on_edit : function
+            - function to call whenever an entry is updated. 
+              Preferably, on_edit refers to Metis' edit command
+        on_delete : function
+            - function to call whenever an entry is deleted. 
+              Preferably, on_delete refers to Metis' delete command
+        is_available : function
+            - boolean function that takes in item and returns 
+              whether the item is available or not. Preferable, is_available
+              refers to Metis' is_available method
+    """
+
+    def __init__(self, window : tk.Tk, master : tk.Frame, collection, binding, canvas_reloader, on_edit, on_delete, is_available):
         self.item_list = dict()
         self.frame_list = dict()
 
         self.window = window
         self.master = master
 
-        self.genres = genres
         self.collection = collection
 
         self.recursive_binding = binding
@@ -116,18 +189,46 @@ class EntriesListHandler:
         self.on_delete = on_delete
 
     def load(self):
+        """
+        Loads the items that are available.
+
+        Rationale: The data must be referenced directly from
+            the backend as much as possible to avoid inconsistencies.
+            As such, loading must as independent as possible, which
+            means that as long as the pre-requisites are met, 
+            no error must occur regarding the data. Also, self.load
+            must have NO strange behavior under any circumstances
+            to ensure that methods that call self.load work as expected.
+
+        Pre-requisites:
+            - self.frame_list must be empty
+            - self.item_list must be empty
+            - self.collection reflects the current data
+            - self.is_available reflects the current filter function
+        """
+        
         for item in filter(self.is_available, self.collection):
             self.insert(item)
     
     def unload(self):
+        """
+        Deletes all the GUI aspect of the entries.
+        
+        Rationale: Unload basically resets the EntryListHandler
+            to a fresh state. As such, no unnecessary data must
+            be left after calling self.unload. This is to ensure
+            that other methods that call self.unload work as expected.
+        """
+
         for item in self.frame_list.values():
             item.destroy()
         self.item_list = dict()
         self.frame_list = dict()
-
         self.gui_reload()
 
     def gui_reload(self):
+        "Some annoying GUI technicalities to force a redrawing."
+
         # Some GUI techninal sht
         frm_temp = tk.Frame(self.master)
         frm_temp.pack()
@@ -138,10 +239,21 @@ class EntriesListHandler:
         self.reload_canvas()
     
     def reload(self):
+        """
+        Reloads and recreates the GUI-aspect of the entries.
+
+        Rationale: Whenever the data is manipulated on a collective
+            level, it is better for the GUI to reload instead of
+            updating each one of the entries. As much as possible,
+            rely on the independency of self.unload and self.load.
+        """
+        
         self.unload()
         self.load()
     
     def insert(self, item):
+        "Creates and inserts a ListEntry based on the item."
+
         self.frame_list[item.get_uid()] = tk.Frame(self.master)
         self.item_list[item.get_uid()] = ListEntry(
             frame=self.frame_list[item.get_uid()], 
@@ -158,11 +270,30 @@ class EntriesListHandler:
         self.reload_canvas()
     
     def delete(self, item):
+        """
+        Deletes a specific item.
+
+        Rationale: Whenever deleting, always delete
+            the GUI first, before destroying the data
+            from the backend. Also, make sure that delete
+            methods are localized as much as possible to
+            avoid dangling data.
+        
+        Pre-requisites:
+            - the item must still be present at the backend
+        
+        Result: 
+            - the GUI will be destroyed (non-reversable)
+            - the item will be deleted from the backend (non-reversable)
+        """
+
         del self.frame_list[item.get_uid()]
         del self.item_list[item.get_uid()]
         self.on_delete(item)
     
     def toggle(self, item_uid):
+        "An intermediary method for toggling."
+
         self.item_list[item_uid].toggle()
     
 class AddDialog:
@@ -230,7 +361,13 @@ class AddDialog:
             self.modal.wait_window()
     
     def pre_submit(self):
-        "Pre-checks the information inputted before packing them in a dictionary for processing."
+        """
+        Pre-checks the information inputted before packing them in a dictionary for processing.
+        
+        When the submission is a success, the data will merely be
+        stored at self.data. Access the data manually after the modal is
+        destroyed.
+        """
 
         # Check if there is a title
         title = self.ent_title.get().strip()
@@ -264,7 +401,13 @@ class AddDialog:
         self.dismiss()
 
 class EditDialog(AddDialog):
-    """Provides an interface for handling the modal of editing a list entry"""
+    """
+    Provides an interface for handling the modal of editing a list entry.
+    
+    Inherits from AddDialog due to similar functions. Adds the
+    option of editing the availability, deleting, and making some
+    of the entries empty (as opposed to having a default value).
+    """
 
     def __init__(self, root, item):
         super().__init__(root, should_wait=False)
@@ -308,7 +451,13 @@ class EditDialog(AddDialog):
         self.modal.wait_window()
     
     def pre_submit(self):
-        "Pre-checks the information inputted before packing them in a dictionary for processing."
+        """
+        Pre-checks the information inputted before packing them in a dictionary for processing.
+        
+        When the submission is a success, the data will merely be
+        stored at self.data. Access the data manually after the modal is
+        destroyed.
+        """
 
         # Check if there is a title
         title = self.ent_title.get().strip()
@@ -335,11 +484,28 @@ class EditDialog(AddDialog):
         self.submit(data)
 
 class GenreGUI:
-    def __init__(self, master, value, parent_delete):
+    """
+    A widget that represents a genre.
+    
+    Individually, GenreGUI are not connected in any way to
+    the backend. These are just used to visualize genres but
+    data must be handled by the parent handler.
+    
+    Parameters: 
+        master : tkinter widget
+            - the master of the GUI. Preferably, the master must
+              be empty to avoid geometry manager problems.
+        value 
+            - the "genre" the widget represents.
+        on_delete : function
+            - the function to call after destroying the widget.
+    """
+
+    def __init__(self, master, value, on_delete):
         self.master = master
         self.value = value
         self.bg = '#e3eeff'
-        self.parent_delete = parent_delete
+        self.on_delete = on_delete
 
         self.frame = tk.Frame(master=master, bg=self.bg)
         self.frame.pack(padx=2, pady=2)
@@ -351,9 +517,43 @@ class GenreGUI:
         self.btn_delete.pack(side=tk.LEFT, padx=2, fill=tk.Y)
     
     def delete(self):
-        self.parent_delete(self)
+        "Deletes the widget."
+
+        self.frame.destroy()
+        self.on_delete(self)
 
 class GenrePacker:
+    """
+    A dynamically-resizing widget that shows the genres.
+
+    Rationale: Tkinter has no native widget that packs widgets
+        side-by-side until the maximum width is attained, after
+        which a new row is created wherein the new contents will
+        be packed starting there. This widget serves as that,
+        with the added specific functionalities of handling
+        genre data. It should be noted that a GenrePacker's use
+        is flexible, so it should not be directly related to
+        Metis specifically and must be a general-purpose widget.
+    
+    Parameters: 
+        master : tk widget
+            - the widget wherein the main frame of the GenrePacker
+              will be packed. To avoid geometry manager problems, the
+              master should be a Frame that is made specifically to
+              contain the GenrePacker ONLY. It should be noted that
+              the GenrePacker's width will adjust to the master.
+        genres (optional) : set
+            - a reference to the VALUES of the genre to be shown. 
+              This means that it should NOT be a set of GenreGUI since
+              GenrePacker will handle the creation of those.
+        suggestions (under construction)
+            - a collection of suggested values that will show when
+              creating a new genre.
+        on_edit (optional) : function
+            - a function that will be called after a genre is created
+              or deleted.
+    """
+
     def __init__(self, master, genres=set(), suggestions=None, on_edit=None):
         self.master = master
         self.suggestions = suggestions
@@ -366,23 +566,75 @@ class GenrePacker:
         self.genres = genres
 
         self.reload()
+
+    # ----------------------------- #
+    # ------ Public Methods ------- #
+    # ----------------------------- #
     
     def load(self, genres):
+        """
+        Loads a new set of genres.
+
+        It should be noted that once load is called, the
+        previously referenced genres will remain UNMODIFIED.
+        This is because, as per rationale, the widget will
+        only work with data referenced from the backend. Hence,
+        this will essentially cut off connection from the 
+        previous set of genres and instead associate itself with
+        the loaded genres. 
+        """
+
         self.genres = genres
         self.reload()
     
+    def reload(self):
+        "Reloads the GUI aspect of the widget."
+
+        for frm in self.rows:
+            frm.destroy()
+            self.frame.update()
+
+        self.rows = [tk.Frame(master=self.frame)]
+        self.rows[0].pack(fill=tk.X)
+
+        for value in self.genres:
+            self._insert_to_row(value)
+        
+        self._insert_add_btn()
+        self.frame.update()
+    
     def add_genre(self, value):
+        """
+        Adds a new genre to both the backend, and the widget.
+
+        It should be noted that value should only be the value
+        of the new genre. It must NOT be GenreGUI. 
+
+        Pre-requisites:
+            - value must NOT be in the referenced genres
+        
+        Result (if successful): 
+            - a new GenreGUI will be created (within GenrePacker)
+            - value will be added to the backend
+        """
+
         if value in self.genres:
             messagebox.showerror(message='Genre already exists.')
             return
         self.genres.add(value)
-        self.insert_to_row(value)
+        self._insert_to_row(value)
+    
+    # ------------------------------ #
+    # ------ Private Methods ------- #
+    # ------------------------------ #
 
-    def insert_to_row(self, value):
+    def _insert_to_row(self, value):
+        "Dynamically adds and resizes the contents of the widget."
+
         while True:
             frame = tk.Frame(master=self.rows[-1])
             frame.pack(side=tk.LEFT)
-            genre = GenreGUI(master=frame, value=value, parent_delete=self.delete_item)
+            genre = GenreGUI(master=frame, value=value, on_delete=self._delete_item)
             self.frame.update()
 
             if self.rows[-1].winfo_reqwidth() < self.frame.winfo_width() - 10 or len(self.rows[-1].winfo_children()) == 1:
@@ -393,12 +645,13 @@ class GenrePacker:
             self.rows.append(tk.Frame(master=self.frame))
             self.rows[-1].pack(fill=tk.X)
     
-    def insert_add_btn(self):
+    def _insert_add_btn(self):
+        "Ensures that the Add Btn stays at the end of the list."
 
         def btn_click(value):
             self.add_genre(value)
             btn_new_genre.destroy()
-            self.insert_add_btn()
+            self._insert_add_btn()
 
             if self.on_edit:
                 self.on_edit()
@@ -416,26 +669,13 @@ class GenrePacker:
             self.rows.append(tk.Frame(master=self.frame))
             self.rows[-1].pack(fill=tk.X)
         
-    def delete_item(self, item):
+    def _delete_item(self, item):
+        "Deletes a GenreGUI (passed to and called by GenreGUI's)"
+        
         item.master.destroy()
         self.genres.remove(item.value)
         if self.on_edit:
             self.on_edit()
-
-    def reload(self):
-
-        for frm in self.rows:
-            frm.destroy()
-            self.frame.update()
-
-        self.rows = [tk.Frame(master=self.frame)]
-        self.rows[0].pack(fill=tk.X)
-
-        for value in self.genres:
-            self.insert_to_row(value)
-        
-        self.insert_add_btn()
-        self.frame.update()
     
     class AddBtn(tk.Button):
         def __init__(self, master, text, on_submit, suggestions):
