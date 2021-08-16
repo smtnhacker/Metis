@@ -714,6 +714,9 @@ class GenrePacker:
         
         def submit(self):
             if self.entry.get().split():
-                self.data = self.entry.get().strip()
+                self.data = self._get_data(self.entry.get())
                 self.on_submit(self.data)
             self.dismiss()
+        
+        def _get_data(self, value):
+            return ' '.join(x.capitalize() for x in value.split())
