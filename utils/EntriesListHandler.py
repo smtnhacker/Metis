@@ -250,7 +250,7 @@ class EntriesListHandler:
         
         self.unload()
         self.load()
-    
+
     def insert(self, item):
         "Creates and inserts a ListEntry based on the item."
 
@@ -674,6 +674,7 @@ class GenrePacker:
         
         item.master.destroy()
         self.genres.remove(item.value)
+        del item
         if self.on_edit:
             self.on_edit()
     

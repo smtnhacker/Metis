@@ -97,7 +97,8 @@ class MetisClass:
         self.indices = { item.format_book() : item.get_uid() for item in self.collection.values() }
 
         self.availables = set(filter(self.is_available, self.collection.values()))
-        self.available_genres = set(genre for item in self.collection.values() for genre in item.genre)
+        self.available_genres.clear()
+        self.available_genres.update(set(genre for item in self.collection.values() for genre in item.genre))
 
         self.recently_read_genre.clear()
         self.recently_read_genre.extend(save_file.recently_read)
