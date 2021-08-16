@@ -94,7 +94,7 @@ class MetisClass:
         self.filter.clear()
         self.filter.update({ genre for genre in save_file.filter })
 
-        self.indices = { item.format_book() : item.get_uid() for item in self.collection.values() }
+        self.indices = { item.format_book().lower() : item.get_uid() for item in self.collection.values() }
 
         self.availables = set(filter(self.is_available, self.collection.values()))
         self.available_genres.clear()
@@ -178,7 +178,7 @@ class MetisClass:
         return True
     
     def toggle(self, item):
-        index = self.indices[item.format_book()]
+        index = self.indices[item.format_book().lower()]
         self.collection[index].available = not self.collection[index].available
 
         if self.is_available(self.collection[index]):
@@ -190,13 +190,13 @@ class MetisClass:
         uid = self.get_next_uid()
         new_item = ReadingListItem(uid=uid, **data)
 
-        if new_item.format_book() in self.indices.keys():
+        if new_item.format_book().lower() in self.indices.keys():
             return None
 
         self.collection[uid] = new_item
         if self.is_available(new_item):
             self.availables.add(new_item)
-        self.indices[new_item.format_book()] = uid
+        self.indices[new_item.format_book().lower()] = uid
         for genre in new_item.genre:
             self.available_genres.add(genre)
 
@@ -207,12 +207,12 @@ class MetisClass:
     def edit_item(self, item, new_data):
         new_item = ReadingListItem(uid=item.get_uid(), **new_data)
         
-        if not item.format_book() == new_item.format_book() and new_item.format_book() in self.indices.keys():
+        if not item.format_book() == new_item.format_book() and new_item.format_book().lower() in self.indices.keys():
             return False
         
-        index = self.indices[item.format_book()]
-        del self.indices[item.format_book()]
-        self.indices[new_item.format_book()] = index
+        index = self.indices[item.format_book().lower()]
+        del self.indices[item.format_book().lower()]
+        self.indices[new_item.format_book().lower()] = index
 
         if new_data['available'] != item.available:
             self.toggle(item)
@@ -225,14 +225,14 @@ class MetisClass:
         return True
     
     def delete_item(self, item):
-        if item.format_book() not in self.indices.keys():
+        if item.format_book().lower() not in self.indices.keys():
             print(f'{item.format_book()} is missing. Cannot be deleted...')
             return
 
-        index = self.indices[item.format_book()]
+        index = self.indices[item.format_book().lower()]
         
         del self.collection[index] # So inefficient...
-        del self.indices[item.format_book()]
+        del self.indices[item.format_book().lower()]
         if item.available:
             self.availables.remove(item)
     

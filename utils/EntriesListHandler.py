@@ -370,7 +370,11 @@ class AddDialog:
         """
 
         # Check if there is a title
-        title = self.ent_title.get().strip()
+
+        def _format(value):
+            return ' '.join(value.split())
+
+        title = _format(self.ent_title.get())
         if not title:
             messagebox.showerror(message='You must have a title!')
             return
