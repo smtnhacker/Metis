@@ -28,7 +28,7 @@ class DialogHandler:
         "Loads a valid json file and returns the filepath and the decoded data"
 
         filepath = askopenfilename(
-            filetypes=[('Metis Files', '*.mts'), ('All Files', '*.*')]
+            filetypes=[('Metis Files', '*.metis'), ('All Files', '*.*')]
         )
 
         if not filepath:
@@ -50,7 +50,7 @@ class DialogHandler:
         "Creates a json file of the reading list and returns the filepath"
         filepath = asksaveasfilename(
             defaultextension='mts',
-            filetypes=[('Metis Files', '*.mts'), ('All Files', '*.*')],
+            filetypes=[('Metis Files', '*.metis'), ('All Files', '*.*')],
         )
         if not filepath:
             return
