@@ -77,10 +77,11 @@ class ListEntry:
     COLOR_HOVER_AVAILABLE = "#ccecff"
     COLOR_HOVER_UNAVAILABLE = "#ffdbcc"
 
-    def __init__(self, frame, on_edit, gui_reload, on_delete, on_toggle, item):
+    def __init__(self, frame, genre_suggestions, on_edit, gui_reload, on_delete, on_toggle, item):
         self.frame = frame
         self.item = item
         self.available = item.available
+        self.genre_suggestions = genre_suggestions
         self.on_edit = on_edit
         self.gui_reload = gui_reload
         self.on_delete = on_delete
@@ -102,7 +103,7 @@ class ListEntry:
                         self.toggle()
                     return self.item
 
-            modal = EditDialog(root=self.frame, item=self.item, attempt_submit=attempt_submit)
+            modal = EditDialog(root=self.frame, item=self.item, attempt_submit=attempt_submit, suggestions=self.genre_suggestions)
 
             # Check if delete action should be performed
             if modal.delete:
@@ -186,6 +187,8 @@ class EntriesListHandler:
             - the parent frame of the reading list GUI
         collection
             - reference to the backend collections
+        genre_suggestions
+            - reference to the current genre collection
         binding : function
             - function for recursive binding to give every widget 
               a particular property
@@ -204,7 +207,7 @@ class EntriesListHandler:
               refers to Metis' is_available method
     """
 
-    def __init__(self, window : tk.Tk, master : tk.Frame, collection, binding, canvas_reloader, on_edit, on_delete, on_toggle, is_available):
+    def __init__(self, window : tk.Tk, master : tk.Frame, collection, genre_suggestions, binding, canvas_reloader, on_edit, on_delete, on_toggle, is_available):
         self.item_list = dict()
         self.frame_list = dict()
 
@@ -212,6 +215,7 @@ class EntriesListHandler:
         self.master = master
 
         self.collection = collection
+        self.genre_suggestions = genre_suggestions
 
         self.recursive_binding = binding
         self.reload_canvas = canvas_reloader
@@ -290,6 +294,7 @@ class EntriesListHandler:
         self.frame_list[item.get_uid()] = tk.Frame(self.master)
         self.item_list[item.get_uid()] = ListEntry(
             frame=self.frame_list[item.get_uid()], 
+            genre_suggestions=self.genre_suggestions,
             on_edit=self.on_edit, 
             gui_reload=self.gui_reload, 
             on_delete=self.delete, 
@@ -452,8 +457,8 @@ class EditDialog(AddDialog):
     of the entries empty (as opposed to having a default value).
     """
 
-    def __init__(self, root, item, attempt_submit):
-        super().__init__(root=root, should_wait=False, attempt_submit=attempt_submit)
+    def __init__(self, root, item, attempt_submit, suggestions):
+        super().__init__(root=root, should_wait=False, attempt_submit=attempt_submit, suggestions=suggestions)
 
         self.modal.title('Edit Entry')
         self.item = item
@@ -769,7 +774,6 @@ class GenrePacker:
             
             def on_d_press(event):
                 index = self.lst_suggestions.curselection()[0]
-                print(index)
                 value = self.temp_suggestions[index]
                 self.entry.delete(0, tk.END)
                 self.entry.insert(0, value)

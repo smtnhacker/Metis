@@ -164,6 +164,7 @@ class App:
             binding=recursive_binding, 
             canvas_reloader=self.reload_canvas,
             collection=self.Metis.collection.values(),
+            genre_suggestions=self.Metis.available_genres,
             on_edit=self.Metis.edit_item,
             on_delete=self.Metis.delete_item,
             on_toggle=self.Metis.toggle,
