@@ -152,6 +152,8 @@ class ListEntry:
         self.on_delete(self.item)
 
     def _on_enter(self, event):
+        self.label.config(text=f'Edit "{self.item.format_book()}"?')
+
         self.frm_btn = tk.Frame(master=self.frame)
         self.frm_btn.pack(side=tk.RIGHT)
         self.btn_toggle = tk.Button(master=self.frm_btn, text='TOGGLE', command=self.item_toggle)
@@ -160,6 +162,7 @@ class ListEntry:
         self.btn_delete.grid(row=0, column=1, padx=5, pady=5)
     
     def _on_leave(self, event):
+        self.label.config(text=self.item.format_book())
         self.frm_btn.destroy()
 
 class EntriesListHandler:
