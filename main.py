@@ -92,7 +92,7 @@ class App:
 
         # ----- Create the Add Book Buttons ----- #
 
-        self.btn_add_book = tk.Button(master=self.frm_main, text="Add Book", width=20)
+        self.btn_add_book = tk.Button(master=self.frm_main, text="Add Books", width=20)
         self.btn_add_book.grid(row=1, column=4, padx=10, pady=5)
         self.btn_add_book.config(command=self.call_add_dialog)
 
@@ -251,6 +251,9 @@ class App:
         else:
             if self.Metis.is_available(new_item):
                 self.Secretary.insert(new_item)
+        
+        # call again to add another book
+        self.call_add_dialog()
     
     @DialogHandler.ask_confirmation
     def cmd_new_list(self):
