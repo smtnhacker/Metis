@@ -70,31 +70,33 @@ class App:
             master=self.frm_main,
             text="Click to request",
             width=20,
+            cursor='hand2',
             command=self.request_book
         )
         self.btn_request_book.grid(row=0, column=0, padx=10, pady=10)
 
-        self.ent_book_given = tk.Entry(master=self.frm_main,)
+        self.ent_book_given = tk.Entry(master=self.frm_main, cursor='')
         self.ent_book_given.bind("<Key>", lambda e : "break") # To make the Entry read-only
+        self.ent_book_given.bind("<FocusIn>", lambda e : self.window.focus_set())
         self.ent_book_given.grid(row=0, column=1, columnspan=4, padx=10, pady=10, sticky='ew')
 
         # ----- Create the File Handling Buttons ----- #
 
-        self.btn_new_list = tk.Button(master=self.frm_main, text="New List", width=20)
+        self.btn_new_list = tk.Button(master=self.frm_main, text="New List", width=20, cursor='hand2')
         self.btn_new_list.grid(row=1, column=0, padx=10, pady=5)
 
-        self.btn_load_list = tk.Button(master=self.frm_main, text="Load List", width=20)
+        self.btn_load_list = tk.Button(master=self.frm_main, text="Load List", width=20, cursor='hand2')
         self.btn_load_list.grid(row=1, column=1, padx=10, pady=5)
 
-        self.btn_save_list = tk.Button(master=self.frm_main, text="Save List", width=20)
+        self.btn_save_list = tk.Button(master=self.frm_main, text="Save List", width=20, cursor='hand2')
         self.btn_save_list.grid(row=1, column=2, padx=10, pady=5)
 
-        self.btn_save_as_list = tk.Button(master=self.frm_main, text="Save As", width=20)
+        self.btn_save_as_list = tk.Button(master=self.frm_main, text="Save As", width=20, cursor='hand2')
         self.btn_save_as_list.grid(row=1, column=3, padx=10, pady=5)
 
         # ----- Create the Add Book Buttons ----- #
 
-        self.btn_add_book = tk.Button(master=self.frm_main, text="Add Books", width=20)
+        self.btn_add_book = tk.Button(master=self.frm_main, text="Add Books", width=20, cursor='hand2')
         self.btn_add_book.grid(row=1, column=4, padx=10, pady=5)
         self.btn_add_book.config(command=self.call_add_dialog)
 

@@ -157,9 +157,9 @@ class ListEntry:
 
         self.frm_btn = tk.Frame(master=self.frame)
         self.frm_btn.pack(side=tk.RIGHT)
-        self.btn_toggle = tk.Button(master=self.frm_btn, text='TOGGLE', command=self.item_toggle)
+        self.btn_toggle = tk.Button(master=self.frm_btn, text='TOGGLE', command=self.item_toggle, cursor='hand2')
         self.btn_toggle.grid(row=0, column=0, padx=5, pady=5)
-        self.btn_delete = tk.Button(master=self.frm_btn, text='DELETE', command=self.delete)
+        self.btn_delete = tk.Button(master=self.frm_btn, text='DELETE', command=self.delete, cursor='hand2')
         self.btn_delete.grid(row=0, column=1, padx=5, pady=5)
     
     def _on_leave(self, event):
@@ -291,7 +291,7 @@ class EntriesListHandler:
     def insert(self, item):
         "Creates and inserts a ListEntry based on the item."
 
-        self.frame_list[item.get_uid()] = tk.Frame(self.master)
+        self.frame_list[item.get_uid()] = tk.Frame(self.master, cursor='hand2')
         self.item_list[item.get_uid()] = ListEntry(
             frame=self.frame_list[item.get_uid()], 
             genre_suggestions=self.genre_suggestions,
@@ -393,10 +393,10 @@ class AddDialog:
         self.frm_btn = tk.Frame(self.modal)
         self.frm_btn.pack(padx=20, pady=5)
         
-        self.btn_submit = tk.Button(master=self.frm_btn, text='Submit', command=self.pre_submit)
+        self.btn_submit = tk.Button(master=self.frm_btn, text='Submit', command=self.pre_submit, cursor='hand2')
         self.btn_submit.grid(row=0, column=0, padx=10)
 
-        self.btn_cancel = tk.Button(master=self.frm_btn, text='Cancel', command=self.dismiss)
+        self.btn_cancel = tk.Button(master=self.frm_btn, text='Cancel', command=self.dismiss, cursor='hand2')
         self.btn_cancel.grid(row=0, column=1, padx=10)
 
         if should_wait:
@@ -473,7 +473,7 @@ class EditDialog(AddDialog):
 
         # Add the Availability
         self.available = tk.BooleanVar(value=self.item.available)
-        self.chk_available = ttk.Checkbutton(self.frm_entries, text='Available', variable=self.available)
+        self.chk_available = ttk.Checkbutton(self.frm_entries, text='Available', variable=self.available, cursor='hand2')
         self.chk_available.grid(row=6, column=1, sticky='e')
 
         # Add the Delete Btn
@@ -483,7 +483,7 @@ class EditDialog(AddDialog):
             self.delete = True
             self.dismiss()
 
-        self.btn_delete = tk.Button(master=self.frm_entries, text='Delete Entry', command=cmd_delete)
+        self.btn_delete = tk.Button(master=self.frm_entries, text='Delete Entry', command=cmd_delete, cursor='hand2')
         self.btn_delete.grid(row=6, column=0, padx=5, pady=5)
 
         self.data = {
@@ -563,7 +563,7 @@ class GenreGUI:
         self.label = tk.Label(master=self.frame, text=value, bg=self.bg)
         self.label.pack(side=tk.LEFT, padx=4)
 
-        self.btn_delete = tk.Button(master=self.frame, text=' x ', font=('Helvetica', 4, 'bold'), command=self.delete)
+        self.btn_delete = tk.Button(master=self.frame, text=' x ', font=('Helvetica', 4, 'bold'), command=self.delete, cursor='hand2')
         self.btn_delete.pack(side=tk.LEFT, padx=2, fill=tk.Y)
     
     def delete(self):
@@ -730,7 +730,7 @@ class GenrePacker:
     
     class AddBtn(tk.Button):
         def __init__(self, master, text, on_submit, suggestions=set()):
-            super().__init__(master=master, text=text)
+            super().__init__(master=master, text=text, cursor='hand2')
             self.data = ''
             self.on_submit = on_submit
             self.suggestions = suggestions
@@ -760,7 +760,7 @@ class GenrePacker:
             self.entry.focus()
 
             # Insert the submit button
-            self.btn_submit = tk.Button(master=self.modal, text='Submit', command=self.submit)
+            self.btn_submit = tk.Button(master=self.modal, text='Submit', command=self.submit, cursor='hand2')
             self.btn_submit.grid(row=0, column=2, padx=5)
 
             # Insert Suggestions
