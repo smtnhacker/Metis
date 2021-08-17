@@ -333,10 +333,11 @@ class EntriesListHandler:
 class AddDialog:
     """Provides an interface for handling the modal in creating a new book item."""
 
-    def __init__(self, root, should_wait=True, attempt_submit=None):
+    def __init__(self, root, should_wait=True, attempt_submit=None, suggestions=list()):
         self.item = None
         self.attempt_submit = attempt_submit
         self.should_close = False
+        self.suggestions = suggestions
 
         self.modal = tk.Toplevel(root)
         self.modal.title('Add a new book')
@@ -382,7 +383,7 @@ class AddDialog:
         self.lbl_genres.grid(row=5, column=0)
         self.frm_genres = tk.Frame(master=self.frm_entries)
         self.frm_genres.grid(row=5, column=1, pady=5, sticky='nsew')
-        self.genres = GenrePacker(master=self.frm_genres)
+        self.genres = GenrePacker(master=self.frm_genres, suggestions=self.suggestions)
         
         self.frm_btn = tk.Frame(self.modal)
         self.frm_btn.pack(padx=20, pady=5)
@@ -723,7 +724,7 @@ class GenrePacker:
             self.on_edit()
     
     class AddBtn(tk.Button):
-        def __init__(self, master, text, on_submit, suggestions):
+        def __init__(self, master, text, on_submit, suggestions=set()):
             super().__init__(master=master, text=text)
             self.data = ''
             self.on_submit = on_submit
@@ -742,13 +743,46 @@ class GenrePacker:
             self.modal.wait_visibility()
             self.modal.grab_set()
 
+            self.modal.columnconfigure(1, weight=1)
+
+            # Insert the label
             self.label = tk.Label(master=self.modal, text='Genre: ')
-            self.label.pack(side=tk.LEFT)
+            self.label.grid(row=0, column=0)
+
+            # Insert the entry box
             self.entry = tk.Entry(master=self.modal, width=50)
-            self.entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            self.entry.grid(row=0, column=1, sticky='ew')
             self.entry.focus()
+
+            # Insert the submit button
             self.btn_submit = tk.Button(master=self.modal, text='Submit', command=self.submit)
-            self.btn_submit.pack(side=tk.RIGHT, padx=5)
+            self.btn_submit.grid(row=0, column=2, padx=5)
+
+            # Insert Suggestions
+
+            self.temp_suggestions = sorted(self.suggestions)
+            def on_key_press(*args, **kwargs):
+                text = self.entry.get()
+                self.temp_suggestions = sorted(filter(lambda x : text in x, self.suggestions))
+                self.suggestionsVar.set(self.temp_suggestions)
+                self.modal.update()
+            
+            def on_d_press(event):
+                index = self.lst_suggestions.curselection()[0]
+                print(index)
+                value = self.temp_suggestions[index]
+                self.entry.delete(0, tk.END)
+                self.entry.insert(0, value)
+
+            self.suggestionsVar = tk.StringVar(value=self.temp_suggestions)
+            self.lst_suggestions = tk.Listbox(master=self.modal, listvariable=self.suggestionsVar, height=3)
+            self.lst_suggestions.grid(row=1, column=1, sticky='ew', pady=7)
+
+            # Set-up suggestions
+            var_text = tk.StringVar()
+            var_text.trace('w', on_key_press)
+            self.entry.config(textvariable=var_text)
+            self.lst_suggestions.bind('<Double-1>', on_d_press)
 
             self.modal.wait_window()
         

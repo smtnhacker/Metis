@@ -250,7 +250,7 @@ class App:
                     self.Secretary.insert(new_item)
                 return new_item
 
-        modal = AddDialog(root=self.window, attempt_submit=attempt_submit)
+        modal = AddDialog(root=self.window, attempt_submit=attempt_submit, suggestions=self.Metis.available_genres)
 
         # Verify if the dialogs should end
         if not modal.item:
