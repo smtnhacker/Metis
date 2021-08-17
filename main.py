@@ -238,19 +238,20 @@ class App:
             components.
         """
 
-        modal = AddDialog(self.window)
+        def attempt_submit(data):
+            new_item = self.Metis.insert_item(data)
+            if not new_item:
+                messagebox.showerror(message='Book already exists.')
+            else:
+                if self.Metis.is_available(new_item):
+                    self.Secretary.insert(new_item)
+                return new_item
 
-        # Verify if there is data
-        if not modal.data:
+        modal = AddDialog(root=self.window, attempt_submit=attempt_submit)
+
+        # Verify if the dialogs should end
+        if not modal.item:
             return
-
-        # Verify if the book already exists
-        new_item = self.Metis.insert_item(modal.data)
-        if not new_item:
-            messagebox.showerror(message='Book already exists.')
-        else:
-            if self.Metis.is_available(new_item):
-                self.Secretary.insert(new_item)
         
         # call again to add another book
         self.call_add_dialog()

@@ -90,19 +90,21 @@ class ListEntry:
             Current function of clicking: Edit the entry.
             """
             
-            modal = EditDialog(self.frame, self.item)
+            def attempt_submit(data):
+                if not self.on_edit(self.item, data):
+                    messagebox.showerror(message='Book entry already exists')
+                else:
+                    self.label.config(text=self.item.format_book())
+                    if self.available != self.item.available:
+                        self.toggle()
+                    return self.item
+
+            modal = EditDialog(root=self.frame, item=self.item, attempt_submit=attempt_submit)
 
             # Check if delete action should be performed
             if modal.delete:
                 self.delete()
                 return
-
-            if not self.on_edit(self.item, modal.data):
-                messagebox.showerror(message='Book entry already exists')
-            else:
-                self.label.config(text=self.item.format_book())
-                if self.available != self.item.available:
-                    self.toggle()
 
         self.frame.config(height=25, bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
         self.frame.bind("<Button-1>", on_click)
@@ -299,8 +301,10 @@ class EntriesListHandler:
 class AddDialog:
     """Provides an interface for handling the modal in creating a new book item."""
 
-    def __init__(self, root, should_wait=True):
-        self.data = None
+    def __init__(self, root, should_wait=True, attempt_submit=None):
+        self.item = None
+        self.attempt_submit = attempt_submit
+        self.should_close = False
 
         self.modal = tk.Toplevel(root)
         self.modal.title('Add a new book')
@@ -394,14 +398,16 @@ class AddDialog:
             'genre': genre
         }
 
-        self.submit(data)
+        new_item = self.attempt_submit(data)
+        if new_item:
+            self.submit(new_item)
     
     def dismiss(self):
         self.modal.grab_release()
         self.modal.destroy()
     
-    def submit(self, data : dict):
-        self.data = data
+    def submit(self, new_item):
+        self.item = new_item
         self.dismiss()
 
 class EditDialog(AddDialog):
@@ -413,8 +419,8 @@ class EditDialog(AddDialog):
     of the entries empty (as opposed to having a default value).
     """
 
-    def __init__(self, root, item):
-        super().__init__(root, should_wait=False)
+    def __init__(self, root, item, attempt_submit):
+        super().__init__(root=root, should_wait=False, attempt_submit=attempt_submit)
 
         self.modal.title('Edit Entry')
         self.item = item
@@ -485,7 +491,9 @@ class EditDialog(AddDialog):
             'genre': genres
         }
 
-        self.submit(data)
+        new_item = self.attempt_submit(data)
+        if new_item:
+            self.submit(new_item)
 
 class GenreGUI:
     """
