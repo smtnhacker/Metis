@@ -209,14 +209,17 @@ class MetisClass:
         
         if not item.format_book() == new_item.format_book() and new_item.format_book().lower() in self.indices.keys():
             return False
-        
+
+        # Call other methods that rely on self.indices first
+        if new_data['available'] != item.available:
+            self.toggle(item)
+
+        # deleting old index, make sure that item.format_book().lower() will not be used anymore
         index = self.indices[item.format_book().lower()]
         del self.indices[item.format_book().lower()]
         self.indices[new_item.format_book().lower()] = index
 
-        if new_data['available'] != item.available:
-            self.toggle(item)
-
+        # apply the superficial changes last
         item.config(**new_data)
 
         for genre in new_data['genre']:
