@@ -115,7 +115,7 @@ class ListEntry:
         self.frame.bind("<Leave>", self._on_leave)
         self.frame.pack(fill=tk.X, padx=10, pady=5)
 
-        self.label = tk.Label(master=self.frame, text=self.item.format_book(), background=self.frame['bg'], width=100)
+        self.label = tk.Label(master=self.frame, text=self.item.format_book(), background=self.frame['bg'], width=80)
         self.label.bind("<Button-1>", on_click)
         self.label.pack(side=tk.LEFT, expand=True, padx=5, pady=5)
     
@@ -152,11 +152,15 @@ class ListEntry:
         self.on_delete(self.item)
 
     def _on_enter(self, event):
-        self.btn_toggle = tk.Button(master=self.frame, text='TOGGLE', command=self.item_toggle)
-        self.btn_toggle.pack(side=tk.RIGHT, padx=5, pady=5)
+        self.frm_btn = tk.Frame(master=self.frame)
+        self.frm_btn.pack(side=tk.RIGHT)
+        self.btn_toggle = tk.Button(master=self.frm_btn, text='TOGGLE', command=self.item_toggle)
+        self.btn_toggle.grid(row=0, column=0, padx=5, pady=5)
+        self.btn_delete = tk.Button(master=self.frm_btn, text='DELETE', command=self.delete)
+        self.btn_delete.grid(row=0, column=1, padx=5, pady=5)
     
     def _on_leave(self, event):
-        self.btn_toggle.destroy()
+        self.frm_btn.destroy()
 
 class EntriesListHandler:
     """
