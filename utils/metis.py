@@ -15,7 +15,7 @@ class ReadingListItem:
 
         self.available = kwargs.get('available', True)
         self.uid = uid
-    
+
     def config(self, **kwargs):
         for attrib, value in kwargs.items():
             if attrib in self.__dict__.keys():
@@ -188,7 +188,7 @@ class MetisClass:
     
     def insert_item(self, data):
         uid = self.get_next_uid()
-        new_item = ReadingListItem(uid=uid, **data)
+        new_item = ReadingListItem(uid=uid, toggle=self.toggle, **data)
 
         if new_item.format_book().lower() in self.indices.keys():
             return None

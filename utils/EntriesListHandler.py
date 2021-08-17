@@ -74,14 +74,17 @@ class ListEntry:
 
     COLOR_AVAILABLE = "#e4ffbd"
     COLOR_UNAVAILABLE = "#ffbdbd"
+    COLOR_HOVER_AVAILABLE = "#ccecff"
+    COLOR_HOVER_UNAVAILABLE = "#ffdbcc"
 
-    def __init__(self, frame, on_edit, gui_reload, on_delete, item):
+    def __init__(self, frame, on_edit, gui_reload, on_delete, on_toggle, item):
         self.frame = frame
         self.item = item
         self.available = item.available
         self.on_edit = on_edit
         self.gui_reload = gui_reload
         self.on_delete = on_delete
+        self.on_toggle = on_toggle
     
         # --- Create the GUI --- #
 
@@ -108,11 +111,13 @@ class ListEntry:
 
         self.frame.config(height=25, bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
         self.frame.bind("<Button-1>", on_click)
+        self.frame.bind("<Enter>", self._on_enter)
+        self.frame.bind("<Leave>", self._on_leave)
         self.frame.pack(fill=tk.X, padx=10, pady=5)
 
-        self.label = tk.Label(master=self.frame, text=self.item.format_book(), background=self.frame['bg'])
+        self.label = tk.Label(master=self.frame, text=self.item.format_book(), background=self.frame['bg'], width=100)
         self.label.bind("<Button-1>", on_click)
-        self.label.pack(padx=5, pady=5)
+        self.label.pack(side=tk.LEFT, expand=True, padx=5, pady=5)
     
     def toggle(self):
         """
@@ -126,7 +131,18 @@ class ListEntry:
 
         self.available = not self.available
         self.frame.config(bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
-        self.label.config(background=self.frame['bg'])
+        self.label.config(bg=self.frame['bg'])
+    
+    def item_toggle(self):
+        """
+        Toggles both the GUI and the backend aspect of the entry.
+
+        Rationale: It is possible that the item will be toggled
+            through GUI. This function serves to make that function
+            clear-cut.
+        """
+        self.toggle()
+        self.on_toggle(self.item)
     
     def delete(self):
         "Deletes the GUI first and calls for its item to be deleted backend afterwards."
@@ -134,6 +150,13 @@ class ListEntry:
         self.frame.destroy()
         self.gui_reload()
         self.on_delete(self.item)
+
+    def _on_enter(self, event):
+        self.btn_toggle = tk.Button(master=self.frame, text='TOGGLE', command=self.item_toggle)
+        self.btn_toggle.pack(side=tk.RIGHT, padx=5, pady=5)
+    
+    def _on_leave(self, event):
+        self.btn_toggle.destroy()
 
 class EntriesListHandler:
     """
@@ -174,7 +197,7 @@ class EntriesListHandler:
               refers to Metis' is_available method
     """
 
-    def __init__(self, window : tk.Tk, master : tk.Frame, collection, binding, canvas_reloader, on_edit, on_delete, is_available):
+    def __init__(self, window : tk.Tk, master : tk.Frame, collection, binding, canvas_reloader, on_edit, on_delete, on_toggle, is_available):
         self.item_list = dict()
         self.frame_list = dict()
 
@@ -189,6 +212,7 @@ class EntriesListHandler:
 
         self.on_edit = on_edit
         self.on_delete = on_delete
+        self.on_toggle = on_toggle
 
     def load(self):
         """
@@ -262,6 +286,7 @@ class EntriesListHandler:
             on_edit=self.on_edit, 
             gui_reload=self.gui_reload, 
             on_delete=self.delete, 
+            on_toggle=self.on_toggle,
             item=item
         )
 

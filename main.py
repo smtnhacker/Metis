@@ -41,6 +41,8 @@ class App:
     def __init__(self):
 
         self.filepath = ''
+        self.changed = False    # False at start and after reloading config (save as, load, new) and save
+                                # Not yet used, too hassle to implement smh
 
         # ----- Initialize the Window ----- #
 
@@ -164,6 +166,7 @@ class App:
             collection=self.Metis.collection.values(),
             on_edit=self.Metis.edit_item,
             on_delete=self.Metis.delete_item,
+            on_toggle=self.Metis.toggle,
             is_available=self.Metis.is_available,
         )
 
@@ -321,6 +324,7 @@ class App:
         else:
             data = self.get_state_data()
             self.Dialogs.save_file(data=data, filepath=self.filepath)
+            self.changed = False
     
     def cmd_save_as_list(self):
         """
@@ -470,10 +474,13 @@ class App:
         # If the filepath is corrupted, just start from scratch
 
         else:
+            # Pseudo self.reload_config_path()
+            # This must work in parallel with the actual
             config['recent_file'] = { 'path' : '' }
             with open(App.CONFIG_PATH, 'w') as config_file:
                 config.write(config_file)
             print('Deleted recent_file path from config')
+            self.changed = False
     
     def attempt_load(self, filepath : str):
         """
@@ -575,6 +582,7 @@ class App:
         config['recent_file']['path'] = self.filepath
         with open(App.CONFIG_PATH, 'w') as config_file:
             config.write(config_file)
+        self.changed = False
     
     def startApp(self):
         self.window.mainloop()
