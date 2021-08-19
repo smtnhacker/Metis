@@ -120,22 +120,14 @@ class App:
         self.lbl_search = tk.Label(master=self.frm_misc, text="Search: ")
         self.lbl_search.grid(row=1, column=0, padx=10, pady=5)
 
-        def on_search_key_press(*args):
-            text = self.ent_search.get()
-            self.Metis.search_filter = text
-            self.Metis.reload_available()
-            self.Secretary.reload()
-
-        self.var_search_text = tk.StringVar()
-        self.var_search_text.trace('w', on_search_key_press)
-
-        self.ent_search = tk.Entry(master=self.frm_misc, textvariable=self.var_search_text)
+        self.ent_search = tk.Entry(master=self.frm_misc)
         self.ent_search.grid(row=1, column=1, padx=10, pady=5, sticky='ew')
         self.ent_search.focus()
 
         # ----- Show the Not Read / Available Stats ----- #
 
-        
+        self.lbl_unread = tk.Label(master=self.frm_misc, text='')
+        self.lbl_unread.grid(row=2, column=0, padx=10, pady=5)
 
         # ----- Create a Scrollable Canvas ----- #
 
@@ -189,6 +181,19 @@ class App:
 
         # ----- Set-up the Reading List Backend ----- #
 
+        def _on_toggle(item):
+            self.Metis.toggle(item)
+            self.unread_ratio_reload()
+        
+        def _on_delete(item):
+            self.Metis.delete_item(item)
+            self.unread_ratio_reload()
+        
+        def _on_edit(item, data):
+            res = self.Metis.edit_item(item, data)
+            self.unread_ratio_reload()
+            return res
+
         self.Secretary = EntriesListHandler(
             window=self.window,
             master=self.frm_container, 
@@ -196,9 +201,9 @@ class App:
             canvas_reloader=self.reload_canvas,
             collection=self.Metis.collection.values(),
             genre_suggestions=self.Metis.available_genres,
-            on_edit=self.Metis.edit_item,
-            on_delete=self.Metis.delete_item,
-            on_toggle=self.Metis.toggle,
+            on_edit=_on_edit,
+            on_delete=_on_delete,
+            on_toggle=_on_toggle, 
             is_available=self.Metis.is_showable,
         )
 
@@ -214,13 +219,14 @@ class App:
         self.btn_load_list.config(command=self.cmd_load_list)
         self.btn_save_as_list.config(command=self.cmd_save_as_list)
 
-        # ----- Set up genre filter ----- #
+        # ----- Set up genre filtering ----- #
 
         def onGenreEdit():
             "Whenever the GenrePacker updates the genres, the App must also be updated."
 
             self.Metis.reload_available()
             self.Secretary.reload()
+            self.unread_ratio_reload()
 
         self.genres = GenrePacker(
             master=self.frm_genres, 
@@ -228,6 +234,19 @@ class App:
             suggestions=self.Metis.available_genres, # Should serve to show the current genres in the App
             on_edit=onGenreEdit,
         )
+
+        # ----- Set up name filtering ----- #
+
+        def onSearchKeyPress(*args):
+            text = self.ent_search.get()
+            self.Metis.search_filter = text
+            self.Metis.reload_available()
+            self.Secretary.reload()
+            self.unread_ratio_reload()
+
+        self.var_search_text = tk.StringVar()
+        self.var_search_text.trace('w', onSearchKeyPress)
+        self.ent_search.config(textvariable=self.var_search_text)
 
         # ----- Load the config file ----- #
 
@@ -280,6 +299,7 @@ class App:
             else:
                 if self.Metis.is_available(new_item):
                     self.Secretary.insert(new_item)
+                self.unread_ratio_reload()
                 return new_item
 
         modal = AddDialog(root=self.window, attempt_submit=attempt_submit, suggestions=self.Metis.available_genres)
@@ -462,6 +482,20 @@ class App:
         self.canvas_list.configure(scrollregion=self.canvas_list.bbox('all'))
         self.canvas_list.config(yscrollcommand=self.scrollbar.set)
         self.check_scrollbar_visibility()
+    
+    def unread_ratio_reload(self):
+        """
+        Updates the available/showable ration.
+        
+        Rationale: As this purely relies on the
+            backend data, Metis reload and Secretary
+            reload must occur before calling this
+            method.
+        """
+
+        self.unread = len(set(filter(self.Metis.is_available, self.Metis.collection.values())))
+        self.population = len(set(filter(self.Metis.is_showable, self.Metis.collection.values())))
+        self.lbl_unread.config(text=f'To read: {self.unread} / {self.population}')
         
     def loadApp(self):
         """
@@ -586,6 +620,7 @@ class App:
 
         self.Secretary.reload()
         self.genres.reload()
+        self.unread_ratio_reload()
 
         return True
     
