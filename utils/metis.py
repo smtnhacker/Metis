@@ -267,13 +267,6 @@ class MetisClass:
                 self.recently_read_genre.popleft()
         
         return chosen
-        
-        if self.availables:
-            chosen = random.choice(list(self.availables))
-            self.toggle(chosen)
-            return chosen
-        else:
-            return None
     
     def is_available(self, item):
         """

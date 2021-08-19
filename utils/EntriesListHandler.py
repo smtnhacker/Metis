@@ -204,7 +204,7 @@ class EntriesListHandler:
         is_available : function
             - boolean function that takes in item and returns 
               whether the item is available or not. Preferable, is_available
-              refers to Metis' is_available method
+              refers to Metis' is_showable method
     """
 
     def __init__(self, window : tk.Tk, master : tk.Frame, collection, genre_suggestions, binding, canvas_reloader, on_edit, on_delete, on_toggle, is_available):
