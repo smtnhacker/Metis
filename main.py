@@ -49,8 +49,8 @@ class App:
         self.window = tk.Tk()
         self.window.title(App.TITLE)
         self.window.minsize(width=960, height=400)
-        self.window.rowconfigure(0, minsize=100, weight=0)
-        self.window.rowconfigure(1, minsize=300, weight=1)
+        self.window.rowconfigure(0, minsize=100, weight=0)      # the main buttons
+        self.window.rowconfigure(2, minsize=300, weight=1)      # the canvas
         self.window.columnconfigure(0, minsize=500, weight=1)
 
         # ------ Initialize Metis ----- #
@@ -100,18 +100,47 @@ class App:
         self.btn_add_book.grid(row=1, column=4, padx=10, pady=5)
         self.btn_add_book.config(command=self.call_add_dialog)
 
+        # ----- Create the Misc Layer ----- #
+
+        self.frm_misc = tk.Frame(master=self.window)
+        self.frm_misc.grid(row=1, column=0, padx=25, sticky='ew')
+        self.frm_misc.columnconfigure(index=0, minsize=15, weight=0)
+        self.frm_misc.columnconfigure(index=1, minsize=200, weight=1)
+
         # ----- Create the Genre Filters ----- #
 
-        self.lbl_genres = tk.Label(master=self.frm_main, text="Genres", width=20)
-        self.lbl_genres.grid(row=2, column=0, padx=10, pady=5)
+        self.lbl_genres = tk.Label(master=self.frm_misc, text="Genres:")
+        self.lbl_genres.grid(row=0, column=0, padx=10, pady=5)
 
-        self.frm_genres = tk.Frame(master=self.frm_main)
-        self.frm_genres.grid(row=2, column=1, padx=10, pady=5, columnspan=4, sticky='ew')
+        self.frm_genres = tk.Frame(master=self.frm_misc)
+        self.frm_genres.grid(row=0, column=1, padx=10, pady=5, sticky='ew')
+
+        # ----- Create Name Filter ----- #
+
+        self.lbl_search = tk.Label(master=self.frm_misc, text="Search: ")
+        self.lbl_search.grid(row=1, column=0, padx=10, pady=5)
+
+        def on_search_key_press(*args):
+            text = self.ent_search.get()
+            self.Metis.search_filter = text
+            self.Metis.reload_available()
+            self.Secretary.reload()
+
+        self.var_search_text = tk.StringVar()
+        self.var_search_text.trace('w', on_search_key_press)
+
+        self.ent_search = tk.Entry(master=self.frm_misc, textvariable=self.var_search_text)
+        self.ent_search.grid(row=1, column=1, padx=10, pady=5, sticky='ew')
+        self.ent_search.focus()
+
+        # ----- Show the Not Read / Available Stats ----- #
+
+        
 
         # ----- Create a Scrollable Canvas ----- #
 
         self.frm_list = tk.Frame(master=self.window)
-        self.frm_list.grid(row=1, column=0, padx=20, pady=20, sticky='nsew')
+        self.frm_list.grid(row=2, column=0, padx=20, pady=5, sticky='nsew')
         self.frm_list.columnconfigure(0, minsize=400, weight=1)
         self.frm_list.rowconfigure(0, minsize=400, weight=1)
 
@@ -170,7 +199,7 @@ class App:
             on_edit=self.Metis.edit_item,
             on_delete=self.Metis.delete_item,
             on_toggle=self.Metis.toggle,
-            is_available=self.Metis.is_available,
+            is_available=self.Metis.is_showable,
         )
 
         # ----- Set up File Handling ----- #

@@ -86,6 +86,7 @@ class MetisClass:
 
         self.available_genres = set()
         self.recently_read_genre = deque()
+        self.search_filter = ''
 
     def reload(self, save_file : SaveFile = SaveFile()):
         self.collection.clear()
@@ -170,11 +171,18 @@ class MetisClass:
         # should be available in the first place
         if not item.available:
             return False
-
+        
+        return self.is_showable(item)
+    
+    def is_showable(self, item):
         # should be correct genre
         if self.filter and not any(genre in self.filter for genre in item.genre):
             return False
         
+        # should be in search result
+        if self.search_filter.lower() not in item.format_book().lower():
+            return False
+
         return True
     
     def toggle(self, item):

@@ -707,7 +707,7 @@ class GenrePacker:
                 self.on_edit()
 
         while True:
-            btn_new_genre = GenrePacker.AddBtn(master=self.rows[-1], text='+', on_submit=btn_click, suggestions=self.suggestions)
+            btn_new_genre = GenrePacker.AddBtn(master=self.rows[-1], text='+', on_submit=btn_click, suggestions=self.suggestions, current_genres=self.genres)
             btn_new_genre.pack(side=tk.LEFT)
             self.frame.update()
 
@@ -729,11 +729,12 @@ class GenrePacker:
             self.on_edit()
     
     class AddBtn(tk.Button):
-        def __init__(self, master, text, on_submit, suggestions=set()):
+        def __init__(self, master, text, on_submit, suggestions=set(), current_genres=set()):
             super().__init__(master=master, text=text, cursor='hand2')
             self.data = ''
             self.on_submit = on_submit
             self.suggestions = suggestions
+            self.current_genres = current_genres
 
             self.config(command=self.call_dialog)
         
@@ -765,10 +766,10 @@ class GenrePacker:
 
             # Insert Suggestions
 
-            self.temp_suggestions = sorted(self.suggestions)
+            self.temp_suggestions = sorted(filter(lambda x : x not in self.current_genres, self.suggestions))
             def on_key_press(*args, **kwargs):
                 text = self.entry.get()
-                self.temp_suggestions = sorted(filter(lambda x : text in x, self.suggestions))
+                self.temp_suggestions = sorted(filter(lambda x : text in x and x not in self.current_genres, self.suggestions))
                 self.suggestionsVar.set(self.temp_suggestions)
                 self.modal.update()
             
@@ -777,6 +778,7 @@ class GenrePacker:
                 value = self.temp_suggestions[index]
                 self.entry.delete(0, tk.END)
                 self.entry.insert(0, value)
+                self.submit()
 
             self.suggestionsVar = tk.StringVar(value=self.temp_suggestions)
             self.lst_suggestions = tk.Listbox(master=self.modal, listvariable=self.suggestionsVar, height=3)
