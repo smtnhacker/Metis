@@ -25,7 +25,7 @@ class DialogHandler:
 
     @ask_confirmation
     def cmd_load_list(self):
-        "Loads a valid json file and returns the filepath and the decoded data"
+        "Loads a valid metis file and returns the filepath and the decoded data"
 
         filepath = askopenfilename(
             filetypes=[('Metis Files', '*.metis'), ('All Files', '*.*')]
@@ -47,7 +47,17 @@ class DialogHandler:
         return res
         
     def cmd_save_list(self, data):
-        "Creates a json file of the reading list and returns the filepath"
+        """
+        Creates a metis file of the reading list and returns the filepath.
+        
+        Parameter:
+            data : SaveFile
+
+        Return value
+            filepath : str (if success)
+                - filepath of the created metis file
+        """
+
         filepath = asksaveasfilename(
             defaultextension='mts',
             filetypes=[('Metis Files', '*.metis'), ('All Files', '*.*')],
@@ -60,6 +70,18 @@ class DialogHandler:
         return filepath
     
     def save_file(self, data, filepath):
+        """
+        Saves a metis file, given the data and filepath.
+        
+        Paramters:
+            data : SaveFile
+            filepath : str
+        
+        Return value
+            filepath : str (if success)
+            '' : str (if fail)
+        """
+
         with open(filepath, 'w') as output_file:
             try:
                 attempt_save = json.dumps(data, indent=4, cls=self.encoder)
