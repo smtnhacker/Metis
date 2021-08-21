@@ -45,15 +45,9 @@ class App:
         Initializes the App.
         """
         
-        # import GUI methods
-        for name, func in _gui.__dict__.items():
-            if callable(func):
-                setattr(self.__class__, name, func)
-        
-        # import interaction methods
-        for name, func in _interactions.__dict__.items():
-            if callable(func):
-                setattr(self.__class__, name, func)
+        # load imported methods
+        self.loadModule(_gui)
+        self.loadModule(_interactions)
 
         self.filepath = ''
         self.changed = False    # False at start and after reloading config (save as, load, new) and save
@@ -74,6 +68,21 @@ class App:
         # ----- Load the config file ----- #
 
         self.loadApp()
+    
+    def loadModule(self, module):
+        """
+        Loads methods from an external module.
+
+        Rationale: The GUI and interactions have been
+            separated from the main App to make them more
+            independent and easier to edit. However, since
+            they are part of one App, they access each other.
+            Hence, they must still be part of the App class.
+        """
+        
+        for name, func in module.__dict__.items():
+            if callable(func):
+                setattr(self.__class__, name, func)
 
     def loadApp(self):
         """
