@@ -8,7 +8,7 @@ import json
 from utils.EntriesListHandler import EntriesListHandler
 from utils.metis import MetisClass, ReadingListItem
 
-class DialogHandler:
+class FileDialogHandler:
     """Handles the creation and management of dialog boxes."""
 
     def __init__(self, encoder_class, decoder_function):

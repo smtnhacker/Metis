@@ -30,7 +30,9 @@ import configparser
 
 from utils.metis import MetisClass, ReadingListItem, SaveFile
 from utils.EntriesListHandler import *
-from utils.DialogHandler import *
+from utils.FileDialogHandler import *
+from utils.DetailDialog import *
+from utils.GenreHandler import *
 
 class App:
     """A class that handles the overall operation of the Metis program."""
@@ -209,7 +211,7 @@ class App:
 
         # ----- Set up File Handling ----- #
 
-        self.Dialogs = DialogHandler(
+        self.Dialogs = FileDialogHandler(
             encoder_class=SaveFile.CollectionEncoder,
             decoder_function=SaveFile.decode_collection
         )
@@ -311,7 +313,7 @@ class App:
         # call again to add another book
         self.call_add_dialog()
     
-    @DialogHandler.ask_confirmation
+    @FileDialogHandler.ask_confirmation
     def cmd_new_list(self):
         """
         Creates a new list by erasing all previously added data.
