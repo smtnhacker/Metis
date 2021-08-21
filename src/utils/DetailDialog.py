@@ -32,48 +32,48 @@ class AddDialog:
         self.modal.grab_set()
 
         # --- Set-up the modal --- #
-        self.frm_entries = tk.Frame(self.modal)
+        self.frm_entries = ttk.Frame(self.modal)
         self.frm_entries.pack(padx=20, pady=10)
 
-        self.lbl_title = tk.Label(master=self.frm_entries, text='Title: ')
+        self.lbl_title = ttk.Label(master=self.frm_entries, text='Title')
         self.lbl_title.grid(row=0, column=0)
-        self.ent_title = tk.Entry(master=self.frm_entries)
+        self.ent_title = ttk.Entry(master=self.frm_entries)
         self.ent_title.grid(row=0, column=1, sticky='ew')
         self.ent_title.focus()
 
-        self.lbl_subtitle = tk.Label(master=self.frm_entries, text='Subtitle: ')
+        self.lbl_subtitle = ttk.Label(master=self.frm_entries, text='Subtitle')
         self.lbl_subtitle.grid(row=1, column=0)
-        self.ent_subtitle = tk.Entry(master=self.frm_entries)
+        self.ent_subtitle = ttk.Entry(master=self.frm_entries)
         self.ent_subtitle.grid(row=1, column=1, sticky='ew')
 
-        self.lbl_author = tk.Label(master=self.frm_entries, text='Author')
+        self.lbl_author = ttk.Label(master=self.frm_entries, text='Author')
         self.lbl_author.grid(row=2, column=0)
-        self.ent_author = tk.Entry(master=self.frm_entries)
+        self.ent_author = ttk.Entry(master=self.frm_entries)
         self.ent_author.grid(row=2, column=1, sticky='ew')
 
-        self.lbl_date = tk.Label(master=self.frm_entries, text='Date: ')
+        self.lbl_date = ttk.Label(master=self.frm_entries, text='Date')
         self.lbl_date.grid(row=3, column=0)
-        self.ent_date = tk.Entry(master=self.frm_entries)
+        self.ent_date = ttk.Entry(master=self.frm_entries)
         self.ent_date.grid(row=3, column=1, sticky='ew')
 
-        self.lbl_summary = tk.Label(master=self.frm_entries, text='Summary: ')
+        self.lbl_summary = ttk.Label(master=self.frm_entries, text='Summary')
         self.lbl_summary.grid(row=4, column=0)
         self.txt_summary = tk.Text(master=self.frm_entries, width=40, height=7)
         self.txt_summary.grid(row=4, column=1, sticky='ew')
 
-        self.lbl_genres = tk.Label(master=self.frm_entries, text='Genres: ')
+        self.lbl_genres = ttk.Label(master=self.frm_entries, text='Genres: ')
         self.lbl_genres.grid(row=5, column=0)
-        self.frm_genres = tk.Frame(master=self.frm_entries)
+        self.frm_genres = ttk.Frame(master=self.frm_entries)
         self.frm_genres.grid(row=5, column=1, pady=5, sticky='nsew')
         self.genres = GenrePacker(master=self.frm_genres, suggestions=self.suggestions)
         
-        self.frm_btn = tk.Frame(self.modal)
+        self.frm_btn = ttk.Frame(self.modal)
         self.frm_btn.pack(padx=20, pady=5)
         
-        self.btn_submit = tk.Button(master=self.frm_btn, text='Submit', command=self.pre_submit, cursor='hand2')
+        self.btn_submit = ttk.Button(master=self.frm_btn, text='Submit', command=self.pre_submit, cursor='hand2')
         self.btn_submit.grid(row=0, column=0, padx=10)
 
-        self.btn_cancel = tk.Button(master=self.frm_btn, text='Cancel', command=self.dismiss, cursor='hand2')
+        self.btn_cancel = ttk.Button(master=self.frm_btn, text='Cancel', command=self.dismiss, cursor='hand2')
         self.btn_cancel.grid(row=0, column=1, padx=10)
 
         if should_wait:
@@ -150,7 +150,9 @@ class EditDialog(AddDialog):
 
         # Add the Availability
         self.available = tk.BooleanVar(value=self.item.available)
-        self.chk_available = ttk.Checkbutton(self.frm_entries, text='Available', variable=self.available, cursor='hand2')
+        self.chk_available = ttk.Checkbutton(
+            self.frm_entries, text='Available', style='Switch.TCheckbutton', variable=self.available, cursor='hand2'
+        )
         self.chk_available.grid(row=6, column=1, sticky='e')
 
         # Add the Delete Btn
@@ -160,7 +162,7 @@ class EditDialog(AddDialog):
             self.delete = True
             self.dismiss()
 
-        self.btn_delete = tk.Button(master=self.frm_entries, text='Delete Entry', command=cmd_delete, cursor='hand2')
+        self.btn_delete = ttk.Button(master=self.frm_entries, text='Delete Entry', command=cmd_delete, cursor='hand2')
         self.btn_delete.grid(row=6, column=0, padx=5, pady=5)
 
         self.data = {

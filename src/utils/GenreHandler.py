@@ -47,7 +47,7 @@ class GenrePacker:
         self.suggestions = suggestions
         self.on_edit = on_edit
 
-        self.frame = tk.Frame(master=master, width=200)
+        self.frame = ttk.Frame(master=master, width=200)
         self.frame.pack(fill=tk.BOTH)
 
         self.rows = list()        
@@ -82,7 +82,7 @@ class GenrePacker:
             frm.destroy()
             self.frame.update()
 
-        self.rows = [tk.Frame(master=self.frame)]
+        self.rows = [ttk.Frame(master=self.frame)]
         self.rows[0].pack(fill=tk.X)
 
         for value in self.genres:
@@ -120,7 +120,7 @@ class GenrePacker:
         "Dynamically adds and resizes the contents of the widget."
 
         while True:
-            frame = tk.Frame(master=self.rows[-1])
+            frame = ttk.Frame(master=self.rows[-1])
             frame.pack(side=tk.LEFT)
             genre = GenreGUI(master=frame, value=value, on_delete=self._delete_item)
             self.frame.update()
@@ -130,7 +130,7 @@ class GenrePacker:
 
             frame.destroy()
             self.frame.update()
-            self.rows.append(tk.Frame(master=self.frame))
+            self.rows.append(ttk.Frame(master=self.frame))
             self.rows[-1].pack(fill=tk.X)
     
     def _insert_add_btn(self):
@@ -154,7 +154,7 @@ class GenrePacker:
 
             btn_new_genre.destroy()
             self.frame.update()
-            self.rows.append(tk.Frame(master=self.frame))
+            self.rows.append(ttk.Frame(master=self.frame))
             self.rows[-1].pack(fill=tk.X)
         
     def _delete_item(self, item):
@@ -166,7 +166,7 @@ class GenrePacker:
         if self.on_edit:
             self.on_edit()
     
-    class AddBtn(tk.Button):
+    class AddBtn(ttk.Button):
         def __init__(self, master, text, on_submit, suggestions=set(), current_genres=set()):
             super().__init__(master=master, text=text, cursor='hand2')
             self.data = ''
@@ -190,16 +190,16 @@ class GenrePacker:
             self.modal.columnconfigure(1, weight=1)
 
             # Insert the label
-            self.label = tk.Label(master=self.modal, text='Genre: ')
+            self.label = ttk.Label(master=self.modal, text='Genre: ')
             self.label.grid(row=0, column=0)
 
             # Insert the entry box
-            self.entry = tk.Entry(master=self.modal, width=50)
+            self.entry = ttk.Entry(master=self.modal, width=50)
             self.entry.grid(row=0, column=1, sticky='ew')
             self.entry.focus()
 
             # Insert the submit button
-            self.btn_submit = tk.Button(master=self.modal, text='Submit', command=self.submit, cursor='hand2')
+            self.btn_submit = ttk.Button(master=self.modal, text='Submit', command=self.submit, cursor='hand2')
             self.btn_submit.grid(row=0, column=2, padx=5)
 
             # Insert Suggestions
@@ -273,7 +273,7 @@ class GenreGUI:
         self.label = tk.Label(master=self.frame, text=value, bg=self.bg)
         self.label.pack(side=tk.LEFT, padx=4)
 
-        self.btn_delete = tk.Button(master=self.frame, text=' x ', font=('Helvetica', 4, 'bold'), command=self.delete, cursor='hand2')
+        self.btn_delete = ttk.Button(master=self.frame, text=' x ', command=self.delete, cursor='hand2')
         self.btn_delete.pack(side=tk.LEFT, padx=2, fill=tk.Y)
     
     def delete(self):

@@ -53,12 +53,6 @@ class App:
         self.changed = False    # False at start and after reloading config (save as, load, new) and save
                                 # Not yet used, too hassle to implement smh
 
-        # ----- Initialize the Window ----- #
-
-        self.window = tk.Tk()
-        self.window.title(App.TITLE)
-        self.window.minsize(width=960, height=400)
-
         # ------ Initialize the App ----- #
 
         self.Metis = MetisClass()
@@ -79,7 +73,7 @@ class App:
             they are part of one App, they access each other.
             Hence, they must still be part of the App class.
         """
-        
+
         for name, func in module.__dict__.items():
             if callable(func):
                 setattr(self.__class__, name, func)

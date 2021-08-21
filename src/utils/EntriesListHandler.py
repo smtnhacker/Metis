@@ -109,7 +109,7 @@ class ListEntry:
                 self.delete()
                 return
 
-        self.frame.config(height=25, bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
+        self.frame.config(height=25, background=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
         self.frame.bind("<Button-1>", on_click)
         self.frame.bind("<Enter>", self._on_enter)
         self.frame.bind("<Leave>", self._on_leave)
@@ -154,11 +154,11 @@ class ListEntry:
     def _on_enter(self, event):
         self.label.config(text=f'Edit "{self.item.format_book()}"?')
 
-        self.frm_btn = tk.Frame(master=self.frame)
+        self.frm_btn = ttk.Frame(master=self.frame)
         self.frm_btn.pack(side=tk.RIGHT)
-        self.btn_toggle = tk.Button(master=self.frm_btn, text='TOGGLE', command=self.item_toggle, cursor='hand2')
+        self.btn_toggle = ttk.Button(master=self.frm_btn, text='TOGGLE', command=self.item_toggle, cursor='hand2')
         self.btn_toggle.grid(row=0, column=0, padx=5, pady=5)
-        self.btn_delete = tk.Button(master=self.frm_btn, text='DELETE', command=self.delete, cursor='hand2')
+        self.btn_delete = ttk.Button(master=self.frm_btn, text='DELETE', command=self.delete, cursor='hand2')
         self.btn_delete.grid(row=0, column=1, padx=5, pady=5)
     
     def _on_leave(self, event):
@@ -206,7 +206,7 @@ class EntriesListHandler:
               refers to Metis' is_showable method
     """
 
-    def __init__(self, window : tk.Tk, master : tk.Frame, collection, genre_suggestions, binding, canvas_reloader, on_edit, on_delete, on_toggle, is_available):
+    def __init__(self, window : tk.Tk, master : ttk.Frame, collection, genre_suggestions, binding, canvas_reloader, on_edit, on_delete, on_toggle, is_available):
         self.item_list = dict()
         self.frame_list = dict()
 
@@ -266,7 +266,7 @@ class EntriesListHandler:
         "Some annoying GUI technicalities to force a redrawing."
 
         # Some GUI techninal sht
-        frm_temp = tk.Frame(self.master)
+        frm_temp = ttk.Frame(self.master)
         frm_temp.pack()
         self.window.update()
         frm_temp.destroy()
