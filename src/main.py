@@ -28,14 +28,9 @@ import json
 import configparser
 
 # import local modules
-from utils.metis import *
-from utils.EntriesListHandler import *
-from utils.FileDialogHandler import *
-from utils.DetailDialog import *
-from utils.GenreHandler import *
-from utils.SaveFile import *
+from utils.metis import MetisClass
 
-# import App extension module
+# import App extension modules
 import _gui
 import _interactions
 
