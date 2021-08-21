@@ -70,7 +70,7 @@ class AddDialog:
         self.frm_btn = ttk.Frame(self.modal)
         self.frm_btn.pack(padx=20, pady=5)
         
-        self.btn_submit = ttk.Button(master=self.frm_btn, text='Submit', command=self.pre_submit, cursor='hand2')
+        self.btn_submit = ttk.Button(master=self.frm_btn, text='Submit', style='Accent.TButton', command=self.pre_submit, cursor='hand2')
         self.btn_submit.grid(row=0, column=0, padx=10)
 
         self.btn_cancel = ttk.Button(master=self.frm_btn, text='Cancel', command=self.dismiss, cursor='hand2')

@@ -109,7 +109,7 @@ class ListEntry:
                 self.delete()
                 return
 
-        self.frame.config(height=25, background=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
+        self.frame.config(height=40, background=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
         self.frame.bind("<Button-1>", on_click)
         self.frame.bind("<Enter>", self._on_enter)
         self.frame.bind("<Leave>", self._on_leave)
@@ -157,9 +157,9 @@ class ListEntry:
         self.frm_btn = ttk.Frame(master=self.frame)
         self.frm_btn.pack(side=tk.RIGHT)
         self.btn_toggle = ttk.Button(master=self.frm_btn, text='TOGGLE', command=self.item_toggle, cursor='hand2')
-        self.btn_toggle.grid(row=0, column=0, padx=5, pady=5)
+        self.btn_toggle.grid(row=0, column=0, padx=5)
         self.btn_delete = ttk.Button(master=self.frm_btn, text='DELETE', command=self.delete, cursor='hand2')
-        self.btn_delete.grid(row=0, column=1, padx=5, pady=5)
+        self.btn_delete.grid(row=0, column=1, padx=5)
     
     def _on_leave(self, event):
         self.label.config(text=self.item.format_book())

@@ -36,6 +36,7 @@ def initialize_gui(self):
     self.btn_request_book = ttk.Button(
         master=self.frm_main,
         text="Click to request",
+        style='Accent.TButton',  
         width=20,
         cursor='hand2',
         command=self.request_book
