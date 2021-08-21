@@ -130,7 +130,7 @@ class GenrePacker:
 
             frame.destroy()
             self.frame.update()
-            self.rows.append(ttk.Frame(master=self.frame))
+            self.rows.append(tk.Frame(master=self.frame))
             self.rows[-1].pack(fill=tk.X)
     
     def _insert_add_btn(self):
@@ -154,7 +154,7 @@ class GenrePacker:
 
             btn_new_genre.destroy()
             self.frame.update()
-            self.rows.append(ttk.Frame(master=self.frame))
+            self.rows.append(tk.Frame(master=self.frame))
             self.rows[-1].pack(fill=tk.X)
         
     def _delete_item(self, item):

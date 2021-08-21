@@ -23,58 +23,68 @@ class AddDialog:
 
         self.modal = tk.Toplevel(root)
         self.modal.title('Add a new book')
-        self.modal.minsize(500, 330)
-        self.modal.resizable(False, False)
+        self.modal.minsize(600, 550)
+        self.modal.resizable(True, False)
 
         self.modal.protocol("WM_DELETE_WINDOW", self.dismiss)
         self.modal.transient(root)
         self.modal.wait_visibility()
         self.modal.grab_set()
 
-        # --- Set-up the modal --- #
-        self.frm_entries = ttk.Frame(self.modal)
-        self.frm_entries.pack(padx=20, pady=10)
+        # ----- Add the details ----- #
+        self.frm_entries = ttk.LabelFrame(self.modal, text='Details')
+        self.frm_entries.pack(padx=20, pady=10, fill=tk.X)
+
+        self.frm_entries.columnconfigure(0, minsize=50, weight=0)
+        self.frm_entries.columnconfigure(1, minsize=450, weight=1)
 
         self.lbl_title = ttk.Label(master=self.frm_entries, text='Title')
-        self.lbl_title.grid(row=0, column=0)
+        self.lbl_title.grid(row=0, column=0, padx=10, sticky='e')
         self.ent_title = ttk.Entry(master=self.frm_entries)
-        self.ent_title.grid(row=0, column=1, sticky='ew')
+        self.ent_title.grid(row=0, column=1, padx=10, pady=5, sticky='ew')
         self.ent_title.focus()
 
         self.lbl_subtitle = ttk.Label(master=self.frm_entries, text='Subtitle')
-        self.lbl_subtitle.grid(row=1, column=0)
+        self.lbl_subtitle.grid(row=1, column=0, padx=10, sticky='e')
         self.ent_subtitle = ttk.Entry(master=self.frm_entries)
-        self.ent_subtitle.grid(row=1, column=1, sticky='ew')
+        self.ent_subtitle.grid(row=1, column=1, padx=10, pady=5, sticky='ew')
 
         self.lbl_author = ttk.Label(master=self.frm_entries, text='Author')
-        self.lbl_author.grid(row=2, column=0)
+        self.lbl_author.grid(row=2, column=0, padx=10, sticky='e')
         self.ent_author = ttk.Entry(master=self.frm_entries)
-        self.ent_author.grid(row=2, column=1, sticky='ew')
+        self.ent_author.grid(row=2, column=1, padx=10, pady=5, sticky='ew')
 
         self.lbl_date = ttk.Label(master=self.frm_entries, text='Date')
-        self.lbl_date.grid(row=3, column=0)
+        self.lbl_date.grid(row=3, column=0, padx=10, sticky='e')
         self.ent_date = ttk.Entry(master=self.frm_entries)
-        self.ent_date.grid(row=3, column=1, sticky='ew')
+        self.ent_date.grid(row=3, column=1, padx=10, pady=5, sticky='ew')
 
         self.lbl_summary = ttk.Label(master=self.frm_entries, text='Summary')
-        self.lbl_summary.grid(row=4, column=0)
+        self.lbl_summary.grid(row=4, column=0, padx=10, sticky='e')
         self.txt_summary = tk.Text(master=self.frm_entries, width=40, height=7)
-        self.txt_summary.grid(row=4, column=1, sticky='ew')
+        self.txt_summary.grid(row=4, column=1, padx=10, pady=3, sticky='ew')
 
-        self.lbl_genres = ttk.Label(master=self.frm_entries, text='Genres: ')
-        self.lbl_genres.grid(row=5, column=0)
+        self.lbl_genres = ttk.Label(master=self.frm_entries, text='Genres')
+        self.lbl_genres.grid(row=5, column=0, padx=10, sticky='e')
         self.frm_genres = ttk.Frame(master=self.frm_entries)
-        self.frm_genres.grid(row=5, column=1, pady=5, sticky='nsew')
+        self.frm_genres.grid(row=5, column=1, padx=10, pady=(5, 15), sticky='nsew')
         self.genres = GenrePacker(master=self.frm_genres, suggestions=self.suggestions)
-        
+
+        # ----- Add the misc ----- #
+
+        self.frm_misc = ttk.Frame(self.modal)
+        self.frm_misc.pack(padx=30, pady=0, fill=tk.X, expand=True)
+
+        # ----- Add the Btns ----- #
+
         self.frm_btn = ttk.Frame(self.modal)
-        self.frm_btn.pack(padx=20, pady=5)
+        self.frm_btn.pack(padx=20)
         
         self.btn_submit = ttk.Button(master=self.frm_btn, text='Submit', style='Accent.TButton', command=self.pre_submit, cursor='hand2')
-        self.btn_submit.grid(row=0, column=0, padx=10)
+        self.btn_submit.grid(row=0, column=0, padx=10, pady=(10, 20))
 
         self.btn_cancel = ttk.Button(master=self.frm_btn, text='Cancel', command=self.dismiss, cursor='hand2')
-        self.btn_cancel.grid(row=0, column=1, padx=10)
+        self.btn_cancel.grid(row=0, column=1, padx=10, pady=(10, 20))
 
         if should_wait:
             self.modal.wait_window()
@@ -148,12 +158,16 @@ class EditDialog(AddDialog):
         self.txt_summary.insert('1.0', self.item.summary[:-2])
         self.genres.load(item.genre if item.genre != None else set())
 
+        # Add the Misc widgets
+        self.frm_misc.columnconfigure(0, weight=1)
+        self.frm_misc.columnconfigure(1, weight=2)
+
         # Add the Availability
         self.available = tk.BooleanVar(value=self.item.available)
         self.chk_available = ttk.Checkbutton(
-            self.frm_entries, text='Available', style='Switch.TCheckbutton', variable=self.available, cursor='hand2'
+            self.frm_misc, text='Available', style='Switch.TCheckbutton', variable=self.available, cursor='hand2'
         )
-        self.chk_available.grid(row=6, column=1, sticky='e')
+        self.chk_available.grid(row=0, column=1, sticky='e')
 
         # Add the Delete Btn
         self.delete = False
@@ -162,8 +176,8 @@ class EditDialog(AddDialog):
             self.delete = True
             self.dismiss()
 
-        self.btn_delete = ttk.Button(master=self.frm_entries, text='Delete Entry', command=cmd_delete, cursor='hand2')
-        self.btn_delete.grid(row=6, column=0, padx=5, pady=5)
+        self.btn_delete = ttk.Button(master=self.frm_misc, text='Delete Entry', command=cmd_delete, cursor='hand2')
+        self.btn_delete.grid(row=0, column=0, padx=5, pady=5, sticky='w')
 
         self.data = {
             'title': self.item.title,

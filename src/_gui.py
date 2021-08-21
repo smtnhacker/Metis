@@ -78,7 +78,7 @@ def initialize_gui(self):
     # ----- Create the Genre Filters ----- #
 
     self.lbl_genres = ttk.Label(master=self.frm_misc, text="Genres")
-    self.lbl_genres.grid(row=0, column=0, padx=10, pady=5)
+    self.lbl_genres.grid(row=0, column=0, padx=(10, 5), pady=5)
 
     self.frm_genres = ttk.Frame(master=self.frm_misc)
     self.frm_genres.grid(row=0, column=1, padx=10, pady=5, sticky='ew')
@@ -86,7 +86,7 @@ def initialize_gui(self):
     # ----- Create Name Filter ----- #
 
     self.lbl_search = ttk.Label(master=self.frm_misc, text="Search")
-    self.lbl_search.grid(row=1, column=0, padx=10, pady=5)
+    self.lbl_search.grid(row=1, column=0, padx=(10, 5), pady=5)
 
     self.ent_search = ttk.Entry(master=self.frm_misc)
     self.ent_search.grid(row=1, column=1, padx=10, pady=5, sticky='ew')
@@ -95,12 +95,12 @@ def initialize_gui(self):
     # ----- Show the Not Read / Available Stats ----- #
 
     self.lbl_unread = ttk.Label(master=self.frm_misc, text='')
-    self.lbl_unread.grid(row=2, column=0, padx=10, pady=5)
+    self.lbl_unread.grid(row=2, column=0, columnspan=2, padx=10, pady=5, sticky='w')
 
     # ----- Create a Scrollable Canvas ----- #
 
     self.frm_list = ttk.Frame(master=self.window)
-    self.frm_list.grid(row=2, column=0, padx=20, pady=5, sticky='nsew')
+    self.frm_list.grid(row=2, column=0, padx=20, pady=(0,20), sticky='nsew')
     self.frm_list.columnconfigure(0, weight=1)
     self.frm_list.rowconfigure(0, weight=1)
 
@@ -118,7 +118,6 @@ def initialize_gui(self):
 
     self.canvas_list.configure(yscrollcommand=self.scrollbar.set)
     self.canvas_list.bind('<Configure>', self.onCanvasConfigure)
-    self.window.bind('<Configure>', self.onCanvasConfigure, '+')
 
     self.frm_container = ttk.Frame(self.canvas_list)
     self.canvas_list.create_window((0,0), width=self.canvas_list.winfo_reqwidth(), window=self.frm_container, anchor='nw', tags='frame')
