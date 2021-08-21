@@ -46,6 +46,9 @@ class App:
     CONFIG_PATH = 'config.ini'
 
     def __init__(self):
+        """
+        Initializes the App.
+        """
         
         # import GUI methods
         for name, func in _gui.__dict__.items():
