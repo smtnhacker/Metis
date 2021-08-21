@@ -6,8 +6,6 @@ the application.
 
 Includes:
 1. class MetisClass - the main backend
-2. class ReadingListItem - represents an entry
-3. class SaveFile - represents the current state (to be used in saving)
 
 Rationale: 
     To reduce any inconsistencies, the application
@@ -21,105 +19,9 @@ Rationale:
 
 from collections import deque
 import random
-import json
 
-class ReadingListItem:
-    """
-    Describes a book to read.
-    
-    Rationale: A book has no method. It
-        merely has facts. Do not place any
-        instance method.
-
-    Warning: Changes to the instance may
-        result to an incompatible save file.
-        Therefore, avoid editing this unless
-        completely necessary!
-    """
-
-    def __init__(self, uid : int, read=False, **kwargs):
-        self.title = kwargs.pop('title')
-        self.subtitle = kwargs.get('subtitle')
-        self.author = kwargs.get('author', 'Anonymous')
-        self.date = kwargs.get('date', 'n.d.')
-        self.summary = kwargs.get('summary', 'TBA')
-        self.genre = set(kwargs.get('genre', []))
-
-        self.available = kwargs.get('available', True)
-        self.uid = uid
-
-    def config(self, **kwargs):
-        """
-        Configures an attribute.
-        
-        Current attributes available:
-            title : string
-            subtitle : string (optional)
-            author : string (optional)
-            date : string (optional) 
-                - preferably the year made
-            summary : string
-            genre : set of strings
-            available : boolean
-            uid : int
-        """
-        for attrib, value in kwargs.items():
-            if attrib in self.__dict__.keys():
-                self.__dict__[attrib] = value
-            else:
-                raise KeyError(f'Attribute {attrib} does not exist.')
-    
-    def format_book(self):
-        return f'{self.title} ({self.date}) by {self.author}'
-    
-    def get_uid(self):
-        return self.uid
-
-class SaveFile:
-    "Handles the data to be used in saving / loading."
-
-    def __init__(self, **kwargs):
-        self.collection = kwargs.pop('collection', dict())
-        self.recently_read = kwargs.pop('recently_read', deque())
-        self.filter = kwargs.pop('filter', set())
-
-    # ------------------------------------------ #
-    # --------- For JSON Conversion ------------ #
-    # ------------------------------------------ #
-        
-    @staticmethod
-    def decode_collection(dct):
-        "A custom decoder for decoding the specific a SaveFile"
-
-        if '__SaveFile__' in dct:
-            return SaveFile(**{key : value for key, value in dct.items() if key != '__SaveFile__'})
-        if '__ReadingListItem__' in dct:
-            return  ReadingListItem(**{key : value for key, value in dct.items() if key != '__ReadingListItem__'})
-        else:
-            return dct
-
-    class CollectionEncoder(json.JSONEncoder):
-        "Extends the JSONEncoder to include encoding SaveFiles"
-
-        def default(self, dct):
-            if isinstance(dct, SaveFile):
-                res = { '__SaveFile__' : True }
-                for key, value in dct.__dict__.items():
-                    if type(value) in {set, deque}:
-                        res[key] = list(value)
-                    else:
-                        res[key] = value
-                return res
-            elif isinstance(dct, ReadingListItem):
-                res = { '__ReadingListItem__' : True }
-                for key, value in dct.__dict__.items():
-                    if type(value) == set:
-                        res[key] = list(value)
-                    else:
-                        res[key] = value
-                return res
-            else:
-                return super().default(dct)
+from utils.SaveFile import *
+from utils.ReadingListItem import *
 
 class MetisClass:
     """

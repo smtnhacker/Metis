@@ -28,11 +28,12 @@ from tkinter.filedialog import askopenfilename, asksaveasfilename
 import json
 import configparser
 
-from utils.metis import MetisClass, ReadingListItem, SaveFile
+from utils.metis import *
 from utils.EntriesListHandler import *
 from utils.FileDialogHandler import *
 from utils.DetailDialog import *
 from utils.GenreHandler import *
+from utils.SaveFile import *
 
 class App:
     """A class that handles the overall operation of the Metis program."""
