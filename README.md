@@ -1,5 +1,7 @@
 # Metis [![forthebadge](https://forthebadge.com/images/badges/made-with-python.svg)](https://forthebadge.com)
 
+![GitHub last commit](https://img.shields.io/github/last-commit/smtnhacker/metis?style=flat-square)
+
 A simple python project that creates reading lists and suggests books to read.
 
 **Main Window**
@@ -9,6 +11,10 @@ A simple python project that creates reading lists and suggests books to read.
 **Creating a new book**
 
 ![Creating a new book](https://github.com/smtnhacker/Metis/blob/master/Screenshots/2.PNG)
+
+## Installation
+
+There's nothing to install. Just make sure that you have Python 3.7.0 or later versions in your system!
 
 ## Usage
 
