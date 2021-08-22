@@ -198,5 +198,5 @@ def unread_ratio_reload(self):
 
     self.unread = len(set(filter(self.Metis.is_available, self.Metis.collection.values())))
     self.population = len(set(filter(self.Metis.is_showable, self.Metis.collection.values())))
-    self.lbl_unread.config(text=f'To read: {self.unread} / {self.population}')
+    self.lbl_unread.config(text=f'Books Left: {self.unread} / {self.population}')
     

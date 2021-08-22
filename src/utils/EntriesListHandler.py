@@ -71,10 +71,10 @@ class ListEntry:
               used to correct some annoying technicalities
     """
 
-    COLOR_AVAILABLE = "#e4ffbd"
-    COLOR_UNAVAILABLE = "#ffbdbd"
+    COLOR_AVAILABLE = "#fdfdfd"
+    COLOR_UNAVAILABLE = "#8cffba"
     COLOR_HOVER_AVAILABLE = "#ccecff"
-    COLOR_HOVER_UNAVAILABLE = "#ffdbcc"
+    COLOR_HOVER_UNAVAILABLE = "#41f287"
 
     def __init__(self, frame, genre_suggestions, on_edit, gui_reload, on_delete, on_toggle, item):
         self.frame = frame
@@ -130,8 +130,7 @@ class ListEntry:
         """
 
         self.available = not self.available
-        self.frame.config(bg=ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
-        self.label.config(bg=self.frame['bg'])
+        self._set_color(ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
     
     def item_toggle(self):
         """
@@ -150,8 +149,13 @@ class ListEntry:
         self.frame.destroy()
         self.gui_reload()
         self.on_delete(self.item)
+    
+    def _set_color(self, color):
+        self.frame.config(bg=color)
+        self.label.config(bg=color)
 
     def _on_enter(self, event):
+        self._set_color(ListEntry.COLOR_HOVER_AVAILABLE if self.available else ListEntry.COLOR_HOVER_UNAVAILABLE)
         self.label.config(text=f'Edit "{self.item.format_book()}"?')
 
         self.frm_btn = ttk.Frame(master=self.frame)
@@ -162,6 +166,7 @@ class ListEntry:
         self.btn_delete.grid(row=0, column=1, padx=5)
     
     def _on_leave(self, event):
+        self._set_color(ListEntry.COLOR_AVAILABLE if self.available else ListEntry.COLOR_UNAVAILABLE)
         self.label.config(text=self.item.format_book())
         self.frm_btn.destroy()
 
