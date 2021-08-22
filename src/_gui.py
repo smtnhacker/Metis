@@ -132,16 +132,16 @@ def initialize_gui(self):
 # -------------------------------------------------- #
 
 def recursive_binding(self, w):
-        "Recursion to bind a widget and all its children to be scrollable"
+    "Recursion to bind a widget and all its children to be scrollable"
 
-        w.bind('<MouseWheel>', self.onCanvasMouseWheel)
-        for child in w.winfo_children():
-            self.recursive_binding(child)
+    w.bind('<MouseWheel>', self.onCanvasMouseWheel)
+    for child in w.winfo_children():
+        self.recursive_binding(child)
 
 def onCanvasMouseWheel(self, event):
-        "Enables the canvas to be scrollable using the mouse wheel."
-        if self.scrollable:
-            self.canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
+    "Enables the canvas to be scrollable using the mouse wheel."
+    if self.scrollable:
+        self.canvas_list.yview_scroll(-1 * int((event.delta / 120)), 'units')
 
 def onCanvasConfigure(self, event):
     self.canvas_list.configure(scrollregion = self.canvas_list.bbox('all'))
