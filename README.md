@@ -4,11 +4,11 @@ A simple python project that creates reading lists and suggests books to read.
 
 **Main Window**
 
-![Metis](Screenshots/1.png) 
+![Metis](https://github.com/smtnhacker/Metis/blob/master/Screenshots/1.PNG) 
 
 **Creating a new book**
 
-![Creating a new book](Screenshots/2.png)
+![Creating a new book](https://github.com/smtnhacker/Metis/blob/master/Screenshots/2.PNG)
 
 ## Usage
 
